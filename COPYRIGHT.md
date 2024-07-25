@@ -1,5 +1,3 @@
-# COPYRIGHT.md
-
 ## Custom License Agreement
 
 This code and associated materials are provided for educational purposes and personal skill assessment only. By cloning or using this code, you agree to the following terms:
@@ -14,4 +12,4 @@ This code and associated materials are provided for educational purposes and per
 
 ---
 
-© [Year] Alexander L. Cooper. All rights reserved.
+© 2024 Alexander L. Cooper. All rights reserved.
