@@ -1,6 +1,8 @@
-# nextjs-foundry-monorepo
+# bond NFT
 
-this is a repo with a ready to go template for making a dapp.
+Bond NFT is a decentralized bond system that allows anyone to create and fund their own bonds at their preferred rates. This enables users to borrow tokens at a fixed rate and for a fixed period, facilitating DeFi and trading activities.
+
+---
 
 # installation
 
@@ -15,12 +17,11 @@ to install the dependincies, run the command below.
 npm install && forge install
 ```
 
-# commands
+# test it out yourself
 
-i have added some custom commands to the package.json so they are in one spot.
+you will need to clone the repo and run it yourself since it uses chainlink contracts that are not available on a test net (as far as i know), after you cloned the repo all you need to do is run the commands below.
 
 ```bash
-npm run node # run a local node
-npm run test # run the tests on the local node
-npm run audit # to audit your code with slither
+npx run node // in a seprate terminal
+npm run dev // this deploys the contracts and then runs the next js app.
 ```

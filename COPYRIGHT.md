@@ -1,21 +1,17 @@
-MIT License
+# COPYRIGHT.md
 
-Copyright (c) 2024 Alexander L. Cooper
+## Custom License Agreement
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+This code and associated materials are provided for educational purposes and personal skill assessment only. By cloning or using this code, you agree to the following terms:
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+1. **Non-Deployment Clause**: You may not deploy this code on any live or test network, or otherwise use it in a production environment. The code is intended for local use only.
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+2. **Cloning and Local Use**: You may clone this code and run it locally on your own system for the purpose of learning, experimentation, or evaluating the skills of the copyright holder.
+
+3. **Copyright Holder Rights**: The copyright holder, Alexander L. Cooper, retains all rights to this code. Unauthorized deployment, distribution, or use beyond the scope of this license is prohibited.
+
+4. **No Warranty**: The code is provided "as-is" without any warranty of any kind. The copyright holder is not responsible for any damages or issues arising from the use of this code.
+
+---
+
+© [Year] Alexander L. Cooper. All rights reserved.

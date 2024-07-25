@@ -3,9 +3,10 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "npm run deploy-dev && next dev",
     "test": "forge test -f http://127.0.0.1:8545",
     "node": "anvil",
+    "deploy-dev": "node -r esm ts-scripts/deploy.ts",
     "compile": "forge build",
     "audit": "slither .",
     "build": "next build",

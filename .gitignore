@@ -38,3 +38,6 @@ next-env.d.ts
 # foundry
 cache/
 out/
+
+# development files
+constants/deploy-dev.json
