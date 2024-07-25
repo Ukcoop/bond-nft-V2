@@ -1,66 +1,26 @@
-## Foundry
+# nextjs-foundry-monorepo
 
-**Foundry is a blazing fast, portable and modular toolkit for Ethereum application development written in Rust.**
+this is a repo with a ready to go template for making a dapp.
 
-Foundry consists of:
+# installation
 
--   **Forge**: Ethereum testing framework (like Truffle, Hardhat and DappTools).
--   **Cast**: Swiss army knife for interacting with EVM smart contracts, sending transactions and getting chain data.
--   **Anvil**: Local Ethereum node, akin to Ganache, Hardhat Network.
--   **Chisel**: Fast, utilitarian, and verbose solidity REPL.
+you will need to have node, npm and foundry installed, if you don't have them installed here are links on how to install them.
 
-## Documentation
+[installing node and npm](https://github.com/tj/n)
+[installing foundry](https://book.getfoundry.sh/getting-started/installation)
 
-https://book.getfoundry.sh/
+to install the dependincies, run the command below.
 
-## Usage
-
-### Build
-
-```shell
-$ forge build
+```bash
+npm install && forge install
 ```
 
-### Test
+# commands
 
-```shell
-$ forge test
-```
+i have added some custom commands to the package.json so they are in one spot.
 
-### Format
-
-```shell
-$ forge fmt
-```
-
-### Gas Snapshots
-
-```shell
-$ forge snapshot
-```
-
-### Anvil
-
-```shell
-$ anvil
-```
-
-### Deploy
-
-```shell
-$ forge script script/Counter.s.sol:CounterScript --rpc-url <your_rpc_url> --private-key <your_private_key>
-```
-
-### Cast
-
-```shell
-$ cast <subcommand>
-```
-
-### Help
-
-```shell
-$ forge --help
-$ anvil --help
-$ cast --help
+```bash
+npm run node # run a local node
+npm run test # run the tests on the local node
+npm run audit # to audit your code with slither
 ```
