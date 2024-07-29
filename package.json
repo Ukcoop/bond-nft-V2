@@ -4,11 +4,12 @@
   "private": true,
   "scripts": {
     "dev": "npm run deploy-dev && next dev",
-    "test": "forge test -f http://127.0.0.1:8545",
-    "node": "anvil",
+    "test": "forge test -vvv -f https://arb1.arbitrum.io/rpc",
+    "node": "anvil -f https://arb1.arbitrum.io/rpc",
     "deploy-dev": "node -r esm ts-scripts/deploy.ts",
     "compile": "forge build",
-    "audit": "slither .",
+    "audit": "slither . --exclude solc-version,pragma",
+    "format": "forge fmt",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"

@@ -2,5 +2,21 @@
 src = "src"
 out = "out"
 libs = ["node_modules", "lib"]
+optimize = true
+optimizer_runs = 200
 
+[fuzz]
+runs = 10000
+
+[fmt]
+sort_imports = true
+contract_new_lines = false
+override_spacing = true
+wrap_comments = true
+line_length = 200
+tab_width = 2
+quote_style = "single"
 # See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
+
+[dependencies]
+"@openzeppelin-contracts" = "5.0.2"
