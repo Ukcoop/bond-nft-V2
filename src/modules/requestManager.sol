@@ -1,23 +1,25 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
-import '../shared.sol';
-import {CommsRail} from '../comms/commsRail.sol';
+import '@openzeppelin-contracts-5.0.2/token/ERC20/IERC20.sol';
 
-contract RequestManager {
+import {CommsRail} from '../comms/commsRail.sol';
+import '../shared.sol';
+
+contract RequestManager is HandlesETH {
   address[] internal whitelistedTokens;
   bondRequest[] internal bondRequests;
   CommsRail internal immutable commsRail;
 
   constructor(address _commsRail) {
-    address[] memory _whitelistedTokens = new address[](7);
+    address[] memory _whitelistedTokens = new address[](6);
     _whitelistedTokens[0] = 0x82aF49447D8a07e3bd95BD0d56f35241523fBab1; // wrapped ETH
     _whitelistedTokens[1] = 0xFd086bC7CD5C481DCC9C85ebE478A1C0b69FCbb9; // USDT
     _whitelistedTokens[2] = 0xaf88d065e77c8cC2239327C5EDb3A432268e5831; // USDC
     _whitelistedTokens[3] = 0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5B0f; // wrapped BTC
     _whitelistedTokens[4] = 0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1; // DAI
-    _whitelistedTokens[5] = 0x4D15a3A2286D883AF0AA1B3f21367843FAc63E07; // TUSD
-    _whitelistedTokens[6] = address(1); // native ETH
+    //_whitelistedTokens[5] = 0x4D15a3A2286D883AF0AA1B3f21367843FAc63E07; // TUSD
+    _whitelistedTokens[5] = address(1); // native ETH
     whitelistedTokens = _whitelistedTokens;
 
     commsRail = CommsRail(_commsRail);
@@ -81,6 +83,17 @@ contract RequestManager {
     );
     uint256 res = (full * percent) / 100;
     return res;
+  }
+
+  function spendFromBondContractsManager(address contractAddress, bondRequest calldata request) public {
+    require(msg.sender == address(commsRail), 'you are not authorized to do this action');
+    if (request.collatralToken == address(1)) {
+      sendViaCall(contractAddress, request.collatralAmount);
+    } else {
+      (bool passed, uint256 index) = commsRail.spenderCanSpendAmount(address(this), request.borrower, request.collatralToken, request.collatralAmount);
+      require(passed, 'an entry was not found with the minimum amount');
+      commsRail.spendEntry(contractAddress, index, request.collatralAmount);
+    }
   }
 
   function postBondRequest(address collatralToken, uint256 collatralAmount, address borrowingToken, uint32 borrowingPercentage, uint32 termInHours, uint32 intrestYearly) public payable {

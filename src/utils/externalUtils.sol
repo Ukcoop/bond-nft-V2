@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
+import {HandlesETH} from '../shared.sol';
 import '@openzeppelin-contracts-5.0.2/token/ERC20/IERC20.sol';
 
 interface Irouter {
@@ -11,6 +12,7 @@ interface Irouter {
   function swapExactETHForTokens(uint256 amountOutMin, address[] calldata path, address to, uint256 deadline) external payable returns (uint256[] memory amounts);
   function swapExactTokensForETH(uint256 amountIn, uint256 amountOutMin, address[] calldata path, address to, uint256 deadline) external returns (uint256[] memory amounts);
   function swapExactTokensForTokens(uint256 amountIn, uint256 amountOutMin, address[] calldata path, address to, uint256 deadline) external returns (uint256[] memory amounts);
+  function swapETHForExactTokens(uint256 amountOut, address[] calldata path, address to, uint256 deadline) external payable returns (uint256[] memory amounts);
 }
 
 interface IWETH {
@@ -19,14 +21,28 @@ interface IWETH {
   function withdraw(uint256) external;
 }
 
-contract ExternalUtils {
+contract ExternalUtils is HandlesETH {
   Irouter immutable router;
 
   constructor() {
     router = Irouter(0x1b02dA8Cb0d097eB8D57A175b88c7D8b47997506);
   }
 
-  function swapETHforToken(address token, address to) public payable returns (uint256) {
+  function canTrade(address token, uint256 amountIn, uint256 amountOutMin) public view returns (bool) {
+    address[] memory path = new address[](2);
+    path[0] = router.WETH();
+    path[1] = token;
+
+    if (path[0] == path[1]) return true;
+    uint256[] memory amountsOut = router.getAmountsOut(amountIn, path);
+    uint256 amountOutExpected = amountsOut[1];
+
+    return amountOutExpected >= amountOutMin;
+  }
+
+  function swapETHforToken(address token, address to, uint256 amountOutMin) public payable returns (uint256) {
+    require(canTrade(token, msg.value, amountOutMin), 'UniswapV2Router: INSUFFICIENT_OUTPUT_AMOUNT');
+
     address[] memory path = new address[](2);
     path[0] = router.WETH();
     path[1] = token;
@@ -37,10 +53,7 @@ contract ExternalUtils {
       return msg.value;
     }
 
-    uint256[] memory amountsOut = router.getAmountsOut(msg.value, path);
-    uint256 outMin = amountsOut[1] - (amountsOut[1] / 10);
-
-    return router.swapExactETHForTokens{value: msg.value}(outMin, path, to, block.timestamp + 1200)[1];
+    return router.swapExactETHForTokens{value: msg.value}(amountOutMin, path, to, block.timestamp + 1200)[1];
   }
 
   function swapTokenForETH(address token, uint256 amount) public returns (uint256) {
@@ -85,6 +98,7 @@ contract ExternalUtils {
     address[] memory path = new address[](2);
     path[0] = input;
     path[1] = output;
+    if (path[0] == path[1]) return amountRequired;
     return router.getAmountsIn(amountRequired, path)[0];
   }
 }

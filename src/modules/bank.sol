@@ -5,10 +5,20 @@ import '@openzeppelin-contracts-5.0.2/token/ERC20/IERC20.sol';
 
 import {HandlesETH} from '../shared.sol';
 
+import {console} from 'forge-std/Test.sol';
+
 struct BondRequestEntry {
   address coin; // ETH is address(1)
   address allower;
   uint256 amount;
+}
+
+struct BondEntry {
+  address collatralToken; // ETH is address(1)
+  address borrowingToken; // ETH is address(1)
+  uint256 collatralAmount;
+  uint256 borrowingAmount;
+  uint256 borrowed;
 }
 
 contract BondRequestBank is HandlesETH {
@@ -82,4 +92,65 @@ contract BondRequestBank is HandlesETH {
       require(status, 'transferFrom failed');
     }
   }
+}
+
+contract BondBank is HandlesETH {
+  address internal immutable commsRail;
+  mapping(bytes32 => BondEntry) internal entries;
+
+  constructor(address _commsRail) {
+    require(_commsRail != address(0), 'commsRail address can not be address(0)');
+    commsRail = _commsRail;
+  }
+
+  function submitBondEntry(address sender, bytes32 uid, address collatralToken, address borrowingToken, uint256 collatralAmount, uint256 borrowingAmount) public payable {
+    require(msg.sender == commsRail, 'you are not authorized to do this action');
+
+    uint256 requiredETHValue = (collatralToken == address(1) ? collatralAmount : 0) + (borrowingToken == address(1) ? borrowingAmount : 0);
+    if (requiredETHValue > 0) require(msg.value >= requiredETHValue, 'not enough ETH was sent');
+
+    if (collatralToken != address(1)) {
+      IERC20 tokenContract = IERC20(collatralToken);
+      uint256 collateralAllowance = tokenContract.allowance(sender, address(this));
+      require(collateralAllowance >= collatralAmount, 'collateral token allowance too low');
+      bool status = tokenContract.transferFrom(sender, address(this), collatralAmount);
+      require(status, 'transferFrom failed');
+    }
+
+    if (borrowingToken != address(1)) {
+      IERC20 tokenContract = IERC20(borrowingToken);
+      uint256 borrowingAllowance = tokenContract.allowance(sender, address(this));
+      require(borrowingAllowance >= borrowingAmount, 'borrowing token allowance too low');
+      bool status = tokenContract.transferFrom(sender, address(this), borrowingAmount);
+      require(status, 'transferFrom failed');
+    }
+
+    entries[uid] = BondEntry(collatralToken, borrowingToken, collatralAmount, borrowingAmount, 0);
+  }
+
+  /*
+  function submitBondEntry(address sender, bytes32 uid, address collatralToken, address borrowingToken, uint256 collatralAmount, uint256 borrowingAmount) public payable {
+    require(msg.sender == commsRail, 'you are not authorized to do this action');
+
+    uint256 requiredETHValue = (collatralToken == address(1) ? collatralAmount : 0) + (borrowingToken == address(1) ? borrowingAmount : 0);
+    if(requiredETHValue > 0) require(msg.value >= requiredETHValue, 'not enough ETH was sent');
+
+    if(collatralToken != address(1)) {
+      IERC20 tokenContract = IERC20(collatralToken);
+      // msg.sender is set to allower at the commsRail
+      //slither-disable-next-line arbitrary-send-erc20
+      bool status = tokenContract.transferFrom(sender, address(this), collatralAmount);
+      require(status, 'transferFrom failed');
+    }
+
+    if(borrowingToken != address(1)) {
+      IERC20 tokenContract = IERC20(borrowingToken);
+      // msg.sender is set to allower at the commsRail
+      //slither-disable-next-line arbitrary-send-erc20
+      bool status = tokenContract.transferFrom(sender, address(this), borrowingAmount);
+      require(status, 'transferFrom failed');
+    }
+
+    entries[uid] = BondEntry(collatralToken, borrowingToken, collatralAmount, borrowingAmount, 0);
+  }*/
 }
