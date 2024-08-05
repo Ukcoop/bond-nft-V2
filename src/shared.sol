@@ -79,8 +79,8 @@ contract Bond {
   }
 
   function setBondId(uint32 bondId, uint32 nftId) public {
-    //require(msg.sender == address(lenderNFTManager) || msg.sender == address(borrowerNFTManager), ' you are not authorized to do this action');
-    //toBondId[nftId] = bondId;
+    require(msg.sender == address(lenderNFTManager) || msg.sender == address(borrowerNFTManager), ' you are not authorized to do this action');
+    toBondId[nftId] = bondId;
   }
 
   function getBondData(uint32 id) internal view returns (bondData memory) {
@@ -143,6 +143,7 @@ contract Bond {
     return ((data.borrowed * 100) / (collatralValue * 100)) >= 90;
   }
 
+  /*
   // slither-disable-start low-level-calls
   // slither-disable-start arbitrary-send-eth
   function sendETHToBorrower(uint32 id, uint256 value) internal {
@@ -161,4 +162,5 @@ contract Bond {
 
   // slither-disable-end low-level-calls
   // slither-disable-end arbitrary-send-eth
+  */
 }

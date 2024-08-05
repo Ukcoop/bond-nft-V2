@@ -13,10 +13,14 @@ import {PriceOracleManager} from '../utils/priceOracleManager.sol';
 contract CommsRail {
   ExternalUtils internal immutable externalUtils;
   PriceOracleManager internal immutable priceOracleManager;
-  BondRequestBank internal bondRequestBank;
-  BondBank internal bondBank;
-  RequestManager internal requestManager;
-  BondContractsManager internal bondContractsManager;
+  BondRequestBank public bondRequestBank;
+  BondBank public bondBank;
+  RequestManager public requestManager;
+  BondContractsManager public bondContractsManager;
+  address public borrowerNFTManager;
+  address public lenderNFTManager;
+  address public borrower;
+  address public lender;
   address internal immutable deployer;
 
   constructor() {
@@ -27,6 +31,7 @@ contract CommsRail {
 
   function addAddress(address contractAddress, string memory contractName) public {
     require(msg.sender == deployer, 'you are not authorized to do this action');
+    require(contractAddress != address(0), 'contractAddress can not be address(0)');
 
     if (keccak256(bytes(contractName)) == keccak256('BondRequestBank')) {
       require(address(bondRequestBank) == address(0), 'this interface was allredy defined');
@@ -39,6 +44,18 @@ contract CommsRail {
     } else if (keccak256(bytes(contractName)) == keccak256('BondContractsManager')) {
       require(address(bondContractsManager) == address(0), 'this interface was allredy defined');
       bondContractsManager = BondContractsManager(payable(contractAddress));
+    } else if (keccak256(bytes(contractName)) == keccak256('BorrowerNFTManager')) {
+      require(borrowerNFTManager == address(0), 'this interface was allredy defined');
+      borrowerNFTManager = contractAddress;
+    } else if (keccak256(bytes(contractName)) == keccak256('LenderNFTManager')) {
+      require(lenderNFTManager == address(0), 'this interface was allredy defined');
+      lenderNFTManager = contractAddress;
+    } else if (keccak256(bytes(contractName)) == keccak256('Borrower')) {
+      require(borrower == address(0), 'this interface was allredy defined');
+      borrower = contractAddress;
+    } else if (keccak256(bytes(contractName)) == keccak256('Lender')) {
+      require(lender == address(0), 'this interface was allredy defined');
+      lender = contractAddress;
     } else {
       revert('invalid interface');
     }
@@ -87,6 +104,20 @@ contract CommsRail {
     return bondRequestBank.spendEntry(msg.sender, to, index, amount);
   }
 
+  function deposit(bytes32 uid, address sender, uint256 amount) public payable {
+    require(msg.sender == borrower, 'you are not authorized to do this action');
+    return bondBank.deposit{value: msg.value}(uid, sender, amount);
+  }
+
+  function withdraw(bytes32 uid, address to, uint256 amount) public {
+    require(msg.sender == borrower, 'you are not authorized to do this action');
+    return bondBank.withdraw(uid, to, amount);
+  }
+
+  function getWhitelistedTokens() public view returns (address[] memory) {
+    return requestManager.getWhitelistedTokens();
+  }
+
   function indexOfBondRequest(bondRequest calldata request) public view returns (int256) {
     return requestManager.indexOfBondRequest(request);
   }
@@ -111,5 +142,9 @@ contract CommsRail {
 
   function setBondData(uint32 bondId, bondData memory data) public {
     return bondContractsManager.setBondData(msg.sender, bondId, data);
+  }
+
+  function getBondPairs() public view returns (uintPair[] memory) {
+    return bondContractsManager.getBondPairs();
   }
 }

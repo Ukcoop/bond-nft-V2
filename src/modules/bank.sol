@@ -5,8 +5,6 @@ import '@openzeppelin-contracts-5.0.2/token/ERC20/IERC20.sol';
 
 import {HandlesETH} from '../shared.sol';
 
-import {console} from 'forge-std/Test.sol';
-
 struct BondRequestEntry {
   address coin; // ETH is address(1)
   address allower;
@@ -108,11 +106,14 @@ contract BondBank is HandlesETH {
 
     uint256 requiredETHValue = (collatralToken == address(1) ? collatralAmount : 0) + (borrowingToken == address(1) ? borrowingAmount : 0);
     if (requiredETHValue > 0) require(msg.value >= requiredETHValue, 'not enough ETH was sent');
+    entries[uid] = BondEntry(collatralToken, borrowingToken, collatralAmount, borrowingAmount, 0);
 
     if (collatralToken != address(1)) {
       IERC20 tokenContract = IERC20(collatralToken);
       uint256 collateralAllowance = tokenContract.allowance(sender, address(this));
       require(collateralAllowance >= collatralAmount, 'collateral token allowance too low');
+      // msg.sender is set to allower at the commsRail
+      //slither-disable-next-line arbitrary-send-erc20
       bool status = tokenContract.transferFrom(sender, address(this), collatralAmount);
       require(status, 'transferFrom failed');
     }
@@ -121,36 +122,53 @@ contract BondBank is HandlesETH {
       IERC20 tokenContract = IERC20(borrowingToken);
       uint256 borrowingAllowance = tokenContract.allowance(sender, address(this));
       require(borrowingAllowance >= borrowingAmount, 'borrowing token allowance too low');
+      // msg.sender is set to allower at the commsRail
+      //slither-disable-next-line arbitrary-send-erc20
       bool status = tokenContract.transferFrom(sender, address(this), borrowingAmount);
       require(status, 'transferFrom failed');
     }
-
-    entries[uid] = BondEntry(collatralToken, borrowingToken, collatralAmount, borrowingAmount, 0);
   }
 
-  /*
-  function submitBondEntry(address sender, bytes32 uid, address collatralToken, address borrowingToken, uint256 collatralAmount, uint256 borrowingAmount) public payable {
+  function withdraw(bytes32 uid, address to, uint256 amount) public {
     require(msg.sender == commsRail, 'you are not authorized to do this action');
+    require(to != address(0), 'the to address can not be address(0)');
+    require(amount != 0, 'you can not withdraw nothing');
 
-    uint256 requiredETHValue = (collatralToken == address(1) ? collatralAmount : 0) + (borrowingToken == address(1) ? borrowingAmount : 0);
-    if(requiredETHValue > 0) require(msg.value >= requiredETHValue, 'not enough ETH was sent');
+    BondEntry memory entry = entries[uid];
+    require(entry.borrowingAmount - entry.borrowed >= amount, 'you are trying to withdraw to much coins');
 
-    if(collatralToken != address(1)) {
-      IERC20 tokenContract = IERC20(collatralToken);
+    entry.borrowed += amount;
+    entries[uid] = entry;
+
+    if (entry.borrowingToken == address(1)) {
+      sendViaCall(to, amount);
+    } else {
+      IERC20 tokenContract = IERC20(entry.borrowingToken);
+      bool status = tokenContract.transfer(to, amount);
+      require(status, 'transfer failed');
+    }
+  }
+
+  function deposit(bytes32 uid, address sender, uint256 amount) public payable {
+    require(msg.sender == commsRail, 'you are not authorized to do this action');
+    require(sender != address(0), 'the sender address can not be address(0)');
+    require(amount != 0, 'you can not deposit nothing');
+    if (msg.value > 0) require(msg.value == amount, 'amount does not match ETH sent');
+
+    BondEntry memory entry = entries[uid];
+    require(entry.borrowed >= amount, 'you are trying to deposit to much coins');
+
+    entry.borrowed -= amount;
+    entries[uid] = entry;
+
+    if (entry.borrowingToken != address(1)) {
+      IERC20 tokenContract = IERC20(entry.borrowingToken);
+      uint256 allowance = tokenContract.allowance(sender, address(this));
+      require(allowance >= amount, 'allowance too low');
       // msg.sender is set to allower at the commsRail
       //slither-disable-next-line arbitrary-send-erc20
-      bool status = tokenContract.transferFrom(sender, address(this), collatralAmount);
+      bool status = tokenContract.transferFrom(sender, address(this), amount);
       require(status, 'transferFrom failed');
     }
-
-    if(borrowingToken != address(1)) {
-      IERC20 tokenContract = IERC20(borrowingToken);
-      // msg.sender is set to allower at the commsRail
-      //slither-disable-next-line arbitrary-send-erc20
-      bool status = tokenContract.transferFrom(sender, address(this), borrowingAmount);
-      require(status, 'transferFrom failed');
-    }
-
-    entries[uid] = BondEntry(collatralToken, borrowingToken, collatralAmount, borrowingAmount, 0);
-  }*/
+  }
 }

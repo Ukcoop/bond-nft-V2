@@ -9,8 +9,6 @@ import {BorrowerNFTManager} from '../modules/NFT/borrowerNFT.sol';
 import {LenderNFTManager} from '../modules/NFT/lenderNFT.sol';
 import '../shared.sol';
 
-import {console} from 'forge-std/Test.sol';
-
 contract BondContractsManager is HandlesETH, ReentrancyGuard {
   mapping(uint256 => bondData) internal bondContractsData;
   uint32 internal maxIds;
@@ -41,6 +39,10 @@ contract BondContractsManager is HandlesETH, ReentrancyGuard {
       }
     }
     return maxIds++;
+  }
+
+  function getNFTAddresses() public view returns (address[2] memory) {
+    return [address(borrowerNFTManager), address(lenderNFTManager)];
   }
 
   function getBondAddresses() public view returns (address[2] memory) {
@@ -74,6 +76,7 @@ contract BondContractsManager is HandlesETH, ReentrancyGuard {
     bondContractsData[bondId] = data;
   }
 
+  /*
   // slither-disable-start costly-loop
   function deleteBondPair(uint32 borrowerId, uint32 lenderId) internal {
     uint256 index = 0;
@@ -98,7 +101,7 @@ contract BondContractsManager is HandlesETH, ReentrancyGuard {
     bondPairs.pop();
   }
   // slither-disable-end costly-loop
-
+  */
   // liquidate function will go here
 
   function getBorrowersIds() public view returns (uint32[] memory) {
@@ -141,22 +144,21 @@ contract BondContractsManager is HandlesETH, ReentrancyGuard {
     uint256 totalToApprove = 0;
 
     if (request.borrowingToken != address(1)) {
-      console.log(request.borrowingToken, msg.sender, address(this), borrowedAmount);
       (bool status, uint256 i) = commsRail.spenderCanSpendAmount(address(this), msg.sender, request.borrowingToken, borrowedAmount);
       require(status, 'an entry was not found with the minimum amount');
       commsRail.spendEntry(address(this), i, borrowedAmount);
-      if(request.borrowingToken == request.collatralToken) {
+      if (request.borrowingToken == request.collatralToken) {
         totalToApprove = borrowedAmount;
       } else {
-        IERC20(request.borrowingToken).approve(bondBankAddress, borrowedAmount);
+        require(IERC20(request.borrowingToken).approve(bondBankAddress, borrowedAmount), 'approve failed');
       }
     }
 
     if (request.collatralToken != address(1)) {
-      IERC20(request.collatralToken).approve(bondBankAddress, totalToApprove + request.collatralAmount);
+      require(IERC20(request.collatralToken).approve(bondBankAddress, totalToApprove + request.collatralAmount), 'approve failed');
     }
-
-    commsRail.submitBondEntry{value: requiredETHValue}(keccak256(abi.encodePacked(borrowerId, borrowerId)), request.collatralToken, request.borrowingToken, request.collatralAmount, borrowedAmount);
+    //slither-disable-next-line arbitrary-send-eth
+    commsRail.submitBondEntry{value: requiredETHValue}(keccak256(abi.encodePacked(borrowerId, lenderId)), request.collatralToken, request.borrowingToken, request.collatralAmount, borrowedAmount);
   }
   // slither-disable-end reentrancy-benign
   // slither-disable-end reentrancy-no-eth

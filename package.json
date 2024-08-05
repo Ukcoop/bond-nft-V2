@@ -1,5 +1,5 @@
 {
-  "name": "nextjs-foundry-monorepo",
+  "name": "bond-nft-V2",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -9,13 +9,14 @@
     "node": "anvil -f https://arb1.arbitrum.io/rpc",
     "deploy-dev": "node -r esm ts-scripts/deploy.ts",
     "compile": "forge build",
-    "audit": "slither . --exclude solc-version,pragma",
+    "audit": "slither . --exclude solc-version,pragma --filter-paths 'node_modules/|lib/|dependencies/'",
     "format": "forge fmt",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"
   },
   "dependencies": {
+    "@chainlink/contracts": "^0.8.0",
     "ethers": "^6.13.1",
     "next": "14.2.5",
     "react": "^18",
