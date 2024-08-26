@@ -72,7 +72,10 @@ contract BondContractsManager is HandlesETH, ReentrancyGuard {
   }
 
   function setBondData(address sender, uint32 bondId, bondData memory data) public {
-    require(msg.sender == address(commsRail) && (sender == borrowerNFTManager.getContractAddress() || sender == lenderNFTManager.getContractAddress()), 'you are not authorized to do this action');
+    require(
+      msg.sender == address(commsRail) && (sender == borrowerNFTManager.getContractAddress() || sender == lenderNFTManager.getContractAddress()),
+      'you are not authorized to do this action'
+    );
     bondContractsData[bondId] = data;
   }
 
@@ -102,7 +105,14 @@ contract BondContractsManager is HandlesETH, ReentrancyGuard {
   }
   // slither-disable-end costly-loop
   */
-  // liquidate function will go here
+  function liquidate(uint32 borrowerId, uint32 lenderId, uint256 quota) public {
+    require(msg.sender == address(commsRail), 'you are not authorized to do this action');
+    commsRail.liquidateLoan(
+      keccak256(abi.encodePacked(borrowerId, lenderId)), borrowerNFTManager.ownerOf(borrowerId), lenderNFTManager.getContractAddress(), quota
+    );
+    borrowerNFTManager.burnBorrowerContract(borrowerId);
+    lenderNFTManager.setLiquidated(lenderId);
+  }
 
   function getBorrowersIds() public view returns (uint32[] memory) {
     return borrowerNFTManager.getIds(msg.sender);
@@ -140,7 +150,8 @@ contract BondContractsManager is HandlesETH, ReentrancyGuard {
 
     address bondBankAddress = commsRail.getAddresses()[1];
     commsRail.spendFromBondContractsManager(request);
-    uint256 requiredETHValue = (request.collatralToken == address(1) ? request.collatralAmount : 0) + (request.borrowingToken == address(1) ? borrowedAmount : 0);
+    uint256 requiredETHValue =
+      (request.collatralToken == address(1) ? request.collatralAmount : 0) + (request.borrowingToken == address(1) ? borrowedAmount : 0);
     uint256 totalToApprove = 0;
 
     if (request.borrowingToken != address(1)) {
@@ -158,7 +169,9 @@ contract BondContractsManager is HandlesETH, ReentrancyGuard {
       require(IERC20(request.collatralToken).approve(bondBankAddress, totalToApprove + request.collatralAmount), 'approve failed');
     }
     //slither-disable-next-line arbitrary-send-eth
-    commsRail.submitBondEntry{value: requiredETHValue}(keccak256(abi.encodePacked(borrowerId, lenderId)), request.collatralToken, request.borrowingToken, request.collatralAmount, borrowedAmount);
+    commsRail.submitBondEntry{value: requiredETHValue}(
+      keccak256(abi.encodePacked(borrowerId, lenderId)), request.collatralToken, request.borrowingToken, request.collatralAmount, borrowedAmount
+    );
   }
   // slither-disable-end reentrancy-benign
   // slither-disable-end reentrancy-no-eth

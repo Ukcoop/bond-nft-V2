@@ -135,12 +135,7 @@ contract Bond {
   function isUnderCollateralized(uint32 id) public view returns (bool) {
     bondData memory data = getBondData(id);
     if (data.borrowed == 0) return false;
-    uint256 collatralValue = commsRail.getPrice(
-      data.collatralAmount,
-      (data.collatralToken == address(1) ? 0x82aF49447D8a07e3bd95BD0d56f35241523fBab1 : data.collatralToken),
-      (data.borrowingToken == address(1) ? 0x82aF49447D8a07e3bd95BD0d56f35241523fBab1 : data.borrowingToken)
-    );
-    return ((data.borrowed * 100) / (collatralValue * 100)) >= 90;
+    return getCollatralizationPercentage(id) >= 90;
   }
 
   /*
@@ -149,18 +144,20 @@ contract Bond {
   function sendETHToBorrower(uint32 id, uint256 value) internal {
     bondData memory data = getBondData(id);
     require(value != 0, 'cannot send nothing');
-    (bool sent,) = payable(borrowerNFTManager.getOwner(data.borrowerId)).call{value: value}(''); // the owner of the nft is the only address that this function will send eth to.
+  (bool sent,) = payable(borrowerNFTManager.getOwner(data.borrowerId)).call{value: value}(''); // the owner of the nft is the only address that this
+  function will send eth to.
     require(sent, 'Failed to send Ether');
   }
+  */
 
   function sendETHToLender(uint32 id, uint256 value) internal {
     bondData memory data = getBondData(id);
     require(value != 0, 'cannot send nothing');
-    (bool sent,) = payable(lenderNFTManager.getOwner(data.lenderId)).call{value: value}(''); // the owner of the nft is the only address that this function will send eth to.
+    (bool sent,) = payable(lenderNFTManager.getOwner(data.lenderId)).call{value: value}(''); // the owner of the nft is the only address that this
+      // function will send eth to.
     require(sent, 'Failed to send Ether');
   }
 
   // slither-disable-end low-level-calls
   // slither-disable-end arbitrary-send-eth
-  */
 }

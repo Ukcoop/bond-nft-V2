@@ -3,6 +3,7 @@ pragma solidity ^0.8.20;
 
 import '@openzeppelin-contracts-5.0.2/token/ERC20/IERC20.sol';
 
+import {CommsRail} from '../comms/commsRail.sol';
 import {HandlesETH} from '../shared.sol';
 
 struct BondRequestEntry {
@@ -93,16 +94,23 @@ contract BondRequestBank is HandlesETH {
 }
 
 contract BondBank is HandlesETH {
-  address internal immutable commsRail;
+  CommsRail internal immutable commsRail;
   mapping(bytes32 => BondEntry) internal entries;
 
   constructor(address _commsRail) {
     require(_commsRail != address(0), 'commsRail address can not be address(0)');
-    commsRail = _commsRail;
+    commsRail = CommsRail(_commsRail);
   }
 
-  function submitBondEntry(address sender, bytes32 uid, address collatralToken, address borrowingToken, uint256 collatralAmount, uint256 borrowingAmount) public payable {
-    require(msg.sender == commsRail, 'you are not authorized to do this action');
+  function submitBondEntry(
+    address sender,
+    bytes32 uid,
+    address collatralToken,
+    address borrowingToken,
+    uint256 collatralAmount,
+    uint256 borrowingAmount
+  ) public payable {
+    require(msg.sender == address(commsRail), 'you are not authorized to do this action');
 
     uint256 requiredETHValue = (collatralToken == address(1) ? collatralAmount : 0) + (borrowingToken == address(1) ? borrowingAmount : 0);
     if (requiredETHValue > 0) require(msg.value >= requiredETHValue, 'not enough ETH was sent');
@@ -129,8 +137,67 @@ contract BondBank is HandlesETH {
     }
   }
 
+  function liquidateLoan(bytes32 uid, address borrower, address lenderContract, uint256 quota) public {
+    require(msg.sender == address(commsRail), 'you are not authorized to do this action');
+
+    BondEntry memory entry = entries[uid];
+    uint256 amountNeeded = quota - (entry.borrowingAmount - entry.borrowed);
+    uint256 amountUsed = 0;
+
+    if (entry.collatralToken == entry.borrowingToken) {
+      if (entry.collatralToken == address(1)) {
+        sendViaCall(lenderContract, quota);
+        sendViaCall(borrower, entry.collatralAmount - amountNeeded);
+      } else {
+        IERC20 tokenContract = IERC20(entry.borrowingToken);
+        bool status = tokenContract.transfer(lenderContract, quota);
+        require(status, 'transfer failed');
+        status = tokenContract.transfer(borrower, entry.collatralAmount - amountNeeded);
+        require(status, 'transfer failed');
+      }
+    } else {
+      if (entry.collatralToken == address(1)) {
+        amountUsed = address(this).balance;
+        if (amountNeeded != 0) {
+          commsRail.swapETHforToken{value: entry.collatralAmount}(entry.borrowingToken, amountNeeded);
+        }
+        amountUsed = amountUsed - address(this).balance;
+        IERC20 tokenContract = IERC20(entry.borrowingToken);
+        bool status = tokenContract.transfer(lenderContract, quota);
+        require(status, 'transfer failed');
+        sendViaCall(borrower, entry.collatralAmount - amountUsed);
+      } else {
+        IERC20 tokenContract = IERC20(entry.collatralToken);
+        amountUsed = tokenContract.balanceOf(address(this));
+        if (entry.borrowingToken == address(1)) {
+          if (amountNeeded != 0) {
+            bool status = tokenContract.approve(address(commsRail.externalUtils()), entry.collatralAmount);
+            require(status, 'approve failed');
+            commsRail.swapTokenForETH(entry.collatralToken, entry.collatralAmount, amountNeeded);
+          }
+          amountUsed = tokenContract.balanceOf(address(this));
+          sendViaCall(lenderContract, quota);
+          bool status2 = tokenContract.transfer(borrower, entry.collatralAmount - amountUsed);
+          require(status2, 'transfer failed');
+        } else {
+          IERC20 token2Contract = IERC20(entry.borrowingToken);
+          if (amountNeeded != 0) {
+            bool status = tokenContract.approve(address(commsRail.externalUtils()), entry.collatralAmount);
+            require(status, 'transfer failed');
+            commsRail.swapTokenForToken(entry.collatralToken, entry.borrowingToken, entry.collatralAmount, amountNeeded);
+          }
+          amountUsed = tokenContract.balanceOf(address(this));
+          bool status2 = token2Contract.transfer(lenderContract, quota);
+          require(status2, 'transfer failed');
+          status2 = tokenContract.transfer(borrower, entry.collatralAmount - amountUsed);
+          require(status2, 'transfer failed');
+        }
+      }
+    }
+  }
+
   function withdraw(bytes32 uid, address to, uint256 amount) public {
-    require(msg.sender == commsRail, 'you are not authorized to do this action');
+    require(msg.sender == address(commsRail), 'you are not authorized to do this action');
     require(to != address(0), 'the to address can not be address(0)');
     require(amount != 0, 'you can not withdraw nothing');
 
@@ -150,7 +217,7 @@ contract BondBank is HandlesETH {
   }
 
   function deposit(bytes32 uid, address sender, uint256 amount) public payable {
-    require(msg.sender == commsRail, 'you are not authorized to do this action');
+    require(msg.sender == address(commsRail), 'you are not authorized to do this action');
     require(sender != address(0), 'the sender address can not be address(0)');
     require(amount != 0, 'you can not deposit nothing');
     if (msg.value > 0) require(msg.value == amount, 'amount does not match ETH sent');

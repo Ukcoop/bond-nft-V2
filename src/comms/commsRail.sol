@@ -11,7 +11,7 @@ import {ExternalUtils} from '../utils/externalUtils.sol';
 import {PriceOracleManager} from '../utils/priceOracleManager.sol';
 
 contract CommsRail {
-  ExternalUtils internal immutable externalUtils;
+  ExternalUtils public immutable externalUtils;
   PriceOracleManager internal immutable priceOracleManager;
   BondRequestBank public bondRequestBank;
   BondBank public bondBank;
@@ -21,6 +21,7 @@ contract CommsRail {
   address public lenderNFTManager;
   address public borrower;
   address public lender;
+  address public automationManager;
   address internal immutable deployer;
 
   constructor() {
@@ -56,6 +57,9 @@ contract CommsRail {
     } else if (keccak256(bytes(contractName)) == keccak256('Lender')) {
       require(lender == address(0), 'this interface was allredy defined');
       lender = contractAddress;
+    } else if (keccak256(bytes(contractName)) == keccak256('AutomationManager')) {
+      require(automationManager == address(0), 'this interface was allredy defined');
+      automationManager = contractAddress;
     } else {
       revert('invalid interface');
     }
@@ -77,8 +81,16 @@ contract CommsRail {
     return externalUtils.canTrade(token, amountIn, amountOutMin);
   }
 
-  function swapETHforToken(address token, uint256 amountOut) public payable returns (uint256) {
-    return externalUtils.swapETHforToken{value: msg.value}(token, msg.sender, amountOut);
+  function swapETHforToken(address token, uint256 amountOutMin) public payable {
+    externalUtils.swapETHforToken{value: msg.value}(token, msg.sender, amountOutMin);
+  }
+
+  function swapTokenForETH(address token, uint256 amount, uint256 amountOutMin) public {
+    externalUtils.swapTokenForETH(token, msg.sender, amount, amountOutMin);
+  }
+
+  function swapTokenForToken(address tokenA, address tokenB, uint256 amount, uint256 amountOutMin) public {
+    externalUtils.swapTokenForToken(tokenA, tokenB, msg.sender, amount, amountOutMin);
   }
 
   function getPrice(uint256 amount, address addressA, address addressB) public view returns (uint256 price) {
@@ -95,13 +107,21 @@ contract CommsRail {
     return bondRequestBank.submitEntry{value: msg.value}(coin, allower, spender, amount);
   }
 
-  function submitBondEntry(bytes32 uid, address collatralToken, address borrowingToken, uint256 collatralAmount, uint256 borrowingAmount) public payable {
+  function submitBondEntry(bytes32 uid, address collatralToken, address borrowingToken, uint256 collatralAmount, uint256 borrowingAmount)
+    public
+    payable
+  {
     return bondBank.submitBondEntry{value: msg.value}(msg.sender, uid, collatralToken, borrowingToken, collatralAmount, borrowingAmount);
   }
 
   function spendEntry(address to, uint256 index, uint256 amount) public {
     require(msg.sender == address(requestManager) || msg.sender == address(bondContractsManager), 'you are not authorized to do this action');
     return bondRequestBank.spendEntry(msg.sender, to, index, amount);
+  }
+
+  function liquidateLoan(bytes32 uid, address borrowerAddress, address lenderContract, uint256 quota) public {
+    require(msg.sender == address(bondContractsManager), 'you are not authorized to do this action');
+    bondBank.liquidateLoan(uid, borrowerAddress, lenderContract, quota);
   }
 
   function deposit(bytes32 uid, address sender, uint256 amount) public payable {
@@ -134,6 +154,11 @@ contract CommsRail {
   function spendFromBondContractsManager(bondRequest calldata request) public {
     require(msg.sender == address(bondContractsManager), 'you are not authorized to do this action');
     return requestManager.spendFromBondContractsManager(address(bondContractsManager), request);
+  }
+
+  function liquidate(uint32 borrowerId, uint32 lenderId, uint256 quota) public {
+    require(msg.sender == address(automationManager), 'you are not authorized to do this action');
+    return bondContractsManager.liquidate(borrowerId, lenderId, quota);
   }
 
   function getBondData(uint32 bondId) public view returns (bondData memory) {

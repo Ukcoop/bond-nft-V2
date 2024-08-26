@@ -2,7 +2,7 @@
 pragma solidity ^0.8.20;
 
 import '@openzeppelin-contracts-5.0.2/access/Ownable.sol';
-//import {IERC20} from  '@openzeppelin-contracts-5.0.2/token/ERC20/IERC20.sol';
+import {IERC20} from '@openzeppelin-contracts-5.0.2/token/ERC20/IERC20.sol';
 import {ERC721, ERC721Burnable} from '@openzeppelin-contracts-5.0.2/token/ERC721/extensions/ERC721Burnable.sol';
 
 import '../../shared.sol';
@@ -70,33 +70,36 @@ contract LenderNFTManager is ERC721Burnable, Ownable, NFTManagerInterface {
     _burn(id);
     burned[id] = true;
   }
+
+  function setLiquidated(uint32 id) public onlyOwner {
+    lenderContract.setLiquidated(id);
+  }
 }
 
 contract Lender is Bond {
   constructor(address _commsRail, address _lenderNFTManager, address _borrowerNFTManager) Bond(_commsRail, _lenderNFTManager, _borrowerNFTManager) {}
 
-  //receive() external payable {}
+  receive() external payable {}
 
-  // new liquidation logic will be located here
-  /* would be needed when liquidation logic is implemented
-  function withdraw(address lender, uint32 id) public view {
+  function setLiquidated(uint32 id) public {
+    require(msg.sender == address(lenderNFTManager), 'you are not authorized to do this action');
+    bondData memory data = getBondData(id);
+    data.liquidated = true;
+    setBondData(id, data);
+  }
+
+  function withdraw(address lender, uint32 id) public {
     bondData memory data = getBondData(id);
     require(lender == lenderNFTManager.getOwner(id), 'you are not the lender');
     require(data.liquidated, 'this bond has not yet been liquidated');
 
-    /* the tokens will be handeld diffrently with a bank contract
-    if(data.borrowingToken != address(1)) {
+    if (data.borrowingToken != address(1)) {
       IERC20 tokenContract = IERC20(data.borrowingToken);
       bool status = tokenContract.transfer(lender, data.total);
-      require(status, "Withdraw failed");
+      require(status, 'Withdraw failed');
     } else {
-      console.log(address(this).balance, data.total, data.borrowingAmount);
       require(address(this).balance >= data.total, 'lender did not end up with enough ETH');
       sendETHToLender(id, data.total);
     }
-
-    //BondContractsManager burn = BondContractsManager(owner);
-    //burn.burnFromLender(id);
   }
-  */
 }

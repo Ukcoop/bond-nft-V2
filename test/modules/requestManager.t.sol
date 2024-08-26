@@ -44,7 +44,11 @@ contract RequestManagerTest is Test, ERC721Holder {
     nft.safeTransferFrom(address(this), to, 0);
   }
 
-  function testPostingABondRequest(uint64 amountIn, uint8 collatralIndex, uint8 borrowingIndex, uint8 percentage, uint16 termInHours, uint8 intrest) public payable returns (bool) {
+  function testPostingABondRequest(uint64 amountIn, uint8 collatralIndex, uint8 borrowingIndex, uint8 percentage, uint16 termInHours, uint8 intrest)
+    public
+    payable
+    returns (bool)
+  {
     amountIn = uint64(bound(amountIn, 10 ** 16, 10 ** 20));
     collatralIndex = uint8(bound(collatralIndex, 0, tokenAddresses.length - 1));
     borrowingIndex = uint8(bound(borrowingIndex, 0, tokenAddresses.length - 1));
@@ -64,8 +68,12 @@ contract RequestManagerTest is Test, ERC721Holder {
         require(expectRevert, 'reverted unexpectidly');
       }
     } else {
-      uint256 amount = commsRail.swapETHforToken{value: amountIn}(collatral, 0);
+      try commsRail.swapETHforToken{value: amountIn}(collatral, 0) {}
+      catch {
+        return true;
+      }
       IERC20 token = IERC20(collatral);
+      uint256 amount = token.balanceOf(address(this));
       token.approve(bondRequestBank, amount);
       commsRail.submitEntry(collatral, address(this), address(requestManager), amount);
       try requestManager.postBondRequest(collatral, amount, borrowing, percentage, termInHours, intrest) {

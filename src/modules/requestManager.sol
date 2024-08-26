@@ -62,8 +62,9 @@ contract RequestManager is HandlesETH {
     uint256 len = _bondRequests.length;
     for (uint256 i = 0; i < len; i++) {
       bool isMatching = (
-        (_bondRequests[i].borrower == request.borrower) && (_bondRequests[i].collatralToken == request.collatralToken) && (_bondRequests[i].collatralAmount == request.collatralAmount)
-          && (_bondRequests[i].borrowingToken == request.borrowingToken) && (_bondRequests[i].durationInHours == request.durationInHours) && (_bondRequests[i].intrestYearly == request.intrestYearly)
+        (_bondRequests[i].borrower == request.borrower) && (_bondRequests[i].collatralToken == request.collatralToken)
+          && (_bondRequests[i].collatralAmount == request.collatralAmount) && (_bondRequests[i].borrowingToken == request.borrowingToken)
+          && (_bondRequests[i].durationInHours == request.durationInHours) && (_bondRequests[i].intrestYearly == request.intrestYearly)
       );
       if (isMatching) {
         return int256(i);
@@ -94,7 +95,14 @@ contract RequestManager is HandlesETH {
     }
   }
 
-  function postBondRequest(address collatralToken, uint256 collatralAmount, address borrowingToken, uint32 borrowingPercentage, uint32 termInHours, uint32 intrestYearly) public payable {
+  function postBondRequest(
+    address collatralToken,
+    uint256 collatralAmount,
+    address borrowingToken,
+    uint32 borrowingPercentage,
+    uint32 termInHours,
+    uint32 intrestYearly
+  ) public payable {
     if (collatralToken == address(1)) require(msg.value != 0, 'can not use 0 ETH as collatral');
     if (collatralToken == address(1)) {
       require(msg.value == collatralAmount, 'the collatralAmount must match the eth sent');

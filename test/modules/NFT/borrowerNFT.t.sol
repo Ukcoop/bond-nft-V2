@@ -13,7 +13,7 @@ import {RequestManagerTest} from '../requestManager.t.sol';
 import {Test, console} from 'forge-std/Test.sol';
 
 contract BorrowerTest is Test, HandlesETH, ERC721Holder {
-  CommsRail internal commsRail;
+  CommsRail public commsRail;
   Borrower internal borrower;
   BondContractsManagerTest internal bondContractsManagerTest;
   RequestManagerTest internal requestManagerTest;
@@ -22,24 +22,35 @@ contract BorrowerTest is Test, HandlesETH, ERC721Holder {
 
   function setUp() public {
     bondContractsManagerTest = new BondContractsManagerTest();
-    requestManagerTest = bondContractsManagerTest.requestManagerTest();
     bondContractsManagerTest.setUp();
+    requestManagerTest = bondContractsManagerTest.requestManagerTest();
     commsRail = bondContractsManagerTest.commsRail();
     borrower = Borrower(commsRail.borrower());
     tokenAddresses = commsRail.getWhitelistedTokens();
   }
 
-  function testBorrowerNFTFunctions(uint8 withdrawAmount, uint8 depositAmount, uint64 amountIn, uint8 collatralIndex, uint8 borrowingIndex, uint8 percentage, uint16 termInHours, uint8 intrest)
-    public
-    returns (bool reverted)
-  {
+  function addAddress(address contractAddress, string memory contractName) public {
+    requestManagerTest.addAddress(contractAddress, contractName);
+  }
+
+  function testBorrowerNFTFunctions(
+    uint8 withdrawAmount,
+    uint8 depositAmount,
+    uint64 amountIn,
+    uint8 collatralIndex,
+    uint8 borrowingIndex,
+    uint8 percentage,
+    uint16 termInHours,
+    uint8 intrest
+  ) public payable returns (bool reverted) {
     withdrawAmount = uint8(bound(withdrawAmount, 0, 100));
     depositAmount = uint8(bound(depositAmount, 0, 100));
     amountIn = uint64(bound(amountIn, 3 * 10 ** 16, 10 ** 18));
     collatralIndex = uint8(bound(collatralIndex, 0, tokenAddresses.length - 1));
     borrowingIndex = uint8(bound(borrowingIndex, 0, tokenAddresses.length - 1));
 
-    reverted = bondContractsManagerTest.testSupplyingABondRequest{value: amountIn}(amountIn, collatralIndex, borrowingIndex, percentage, termInHours, intrest);
+    reverted =
+      bondContractsManagerTest.testSupplyingABondRequest{value: amountIn}(amountIn, collatralIndex, borrowingIndex, percentage, termInHours, intrest);
     if (reverted) return reverted;
 
     bondContractsManagerTest.sendBorrowerNFTToTestContract();

@@ -44,12 +44,17 @@ contract BondContractsManagerTest is Test, HandlesETH, ERC721Holder {
     requestManagerTest.sendNFTToTestContract(msg.sender);
   }
 
-  function testSupplyingABondRequest(uint64 amountIn, uint8 collatralIndex, uint8 borrowingIndex, uint8 percentage, uint16 termInHours, uint8 intrest) public payable returns (bool reverted) {
+  function testSupplyingABondRequest(uint64 amountIn, uint8 collatralIndex, uint8 borrowingIndex, uint8 percentage, uint16 termInHours, uint8 intrest)
+    public
+    payable
+    returns (bool reverted)
+  {
     amountIn = uint64(bound(amountIn, 3 * 10 ** 16, 10 ** 18));
     collatralIndex = uint8(bound(collatralIndex, 0, tokenAddresses.length - 1));
     borrowingIndex = uint8(bound(borrowingIndex, 0, tokenAddresses.length - 1));
 
-    reverted = requestManagerTest.testPostingABondRequest{value: amountIn / 2}(amountIn / 2, collatralIndex, borrowingIndex, percentage, termInHours, intrest);
+    reverted =
+      requestManagerTest.testPostingABondRequest{value: amountIn / 2}(amountIn / 2, collatralIndex, borrowingIndex, percentage, termInHours, intrest);
     if (reverted) return reverted;
 
     bondRequest memory request = requestManager.getBondRequests()[0];
@@ -62,14 +67,13 @@ contract BondContractsManagerTest is Test, HandlesETH, ERC721Holder {
       uint256 amountRequired = requestManager.getRequiredAmountForRequest(request);
       if (!commsRail.canTrade(request.borrowingToken, amountIn, amountRequired)) vm.assume(false);
       if (amountIn > address(this).balance) amountIn = uint64(address(this).balance * 90 / 100);
-      uint256 amount;
-      try commsRail.swapETHforToken{value: amountIn}(request.borrowingToken, amountRequired) returns (uint256 returned) {
-        amount = returned;
-      } catch {
+      try commsRail.swapETHforToken{value: amountIn}(request.borrowingToken, amountRequired) {}
+      catch {
         vm.assume(false);
       }
-      if (amount < amountRequired) vm.assume(false);
       IERC20 token = IERC20(request.borrowingToken);
+      uint256 amount = token.balanceOf(address(this));
+      if (amount < amountRequired) vm.assume(false);
       token.approve(bondRequestBank, amountRequired);
       commsRail.submitEntry(request.borrowingToken, address(this), address(bondContractsManager), amountRequired);
       bondContractsManager.lendToBorrower(request);
