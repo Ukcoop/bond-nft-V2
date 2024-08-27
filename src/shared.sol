@@ -66,20 +66,28 @@ abstract contract HandlesETH {
   // slither-disable-end arbitrary-send-eth
 }
 
+contract InterfacesWithNFTManager {
+  //slither-disable-next-line naming-convention  
+  NFTManagerInterface internal immutable NFTManager;
+
+  constructor(address _NFTManager) {
+    NFTManager = NFTManagerInterface(_NFTManager);
+  }
+}
+
 contract Bond {
   mapping(uint32 => uint32) internal toBondId;
-  NFTManagerInterface internal immutable lenderNFTManager;
-  NFTManagerInterface internal immutable borrowerNFTManager;
   CommsRail internal immutable commsRail;
+  //slither-disable-next-line naming-convention
+  address internal immutable NFTManagerAddress;
 
-  constructor(address _commsRail, address _lenderNFTManager, address _borrowerNFTManager) {
+  constructor(address _commsRail, address _NFTManagerAddress) {
     commsRail = CommsRail(_commsRail);
-    lenderNFTManager = NFTManagerInterface(_lenderNFTManager);
-    borrowerNFTManager = NFTManagerInterface(_borrowerNFTManager);
+    NFTManagerAddress = _NFTManagerAddress;
   }
 
   function setBondId(uint32 bondId, uint32 nftId) public {
-    require(msg.sender == address(lenderNFTManager) || msg.sender == address(borrowerNFTManager), ' you are not authorized to do this action');
+    require(msg.sender == NFTManagerAddress, ' you are not authorized to do this action');
     toBondId[nftId] = bondId;
   }
 
@@ -94,10 +102,14 @@ contract Bond {
   function getData(uint32 id) public view returns (bondData memory) {
     return getBondData(id);
   }
+}
 
+contract BondQueries is Bond {
+  constructor(address _commsRail, address _NFTManagerAddress) Bond(_commsRail, _NFTManagerAddress) {}
   // slither-disable-start timestamp
   // slither-disable-start divide-before-multiply
   // slither-disable-start assembly
+
   function getOwed(uint32 id) public view returns (uint256 owed) {
     bondData memory data = getBondData(id);
     uint256 start = data.startTime;
@@ -137,27 +149,4 @@ contract Bond {
     if (data.borrowed == 0) return false;
     return getCollatralizationPercentage(id) >= 90;
   }
-
-  /*
-  // slither-disable-start low-level-calls
-  // slither-disable-start arbitrary-send-eth
-  function sendETHToBorrower(uint32 id, uint256 value) internal {
-    bondData memory data = getBondData(id);
-    require(value != 0, 'cannot send nothing');
-  (bool sent,) = payable(borrowerNFTManager.getOwner(data.borrowerId)).call{value: value}(''); // the owner of the nft is the only address that this
-  function will send eth to.
-    require(sent, 'Failed to send Ether');
-  }
-  */
-
-  function sendETHToLender(uint32 id, uint256 value) internal {
-    bondData memory data = getBondData(id);
-    require(value != 0, 'cannot send nothing');
-    (bool sent,) = payable(lenderNFTManager.getOwner(data.lenderId)).call{value: value}(''); // the owner of the nft is the only address that this
-      // function will send eth to.
-    require(sent, 'Failed to send Ether');
-  }
-
-  // slither-disable-end low-level-calls
-  // slither-disable-end arbitrary-send-eth
 }

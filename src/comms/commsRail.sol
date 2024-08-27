@@ -65,9 +65,11 @@ contract CommsRail {
     }
   }
 
+  /*
   function getAddresses() public view returns (address[2] memory) {
     return [address(bondContractsManager), address(bondBank)];
   }
+  */
 
   function getTokenBalance(address token, address addr) public view returns (uint256) {
     return externalUtils.getTokenBalance(token, addr);

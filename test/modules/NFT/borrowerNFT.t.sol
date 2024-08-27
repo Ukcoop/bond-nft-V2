@@ -15,7 +15,7 @@ import {Test, console} from 'forge-std/Test.sol';
 contract BorrowerTest is Test, HandlesETH, ERC721Holder {
   CommsRail public commsRail;
   Borrower internal borrower;
-  BondContractsManagerTest internal bondContractsManagerTest;
+  BondContractsManagerTest public bondContractsManagerTest;
   RequestManagerTest internal requestManagerTest;
 
   address[] public tokenAddresses;

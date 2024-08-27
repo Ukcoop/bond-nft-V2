@@ -2,6 +2,7 @@
 pragma solidity ^0.8.20;
 
 import '@openzeppelin-contracts-5.0.2/token/ERC20/IERC20.sol';
+import '@openzeppelin-contracts-5.0.2/token/ERC721/IERC721.sol';
 import '@openzeppelin-contracts-5.0.2/token/ERC721/utils/ERC721Holder.sol';
 
 import {CommsRail} from '../../src/comms/commsRail.sol';
@@ -42,6 +43,11 @@ contract BondContractsManagerTest is Test, HandlesETH, ERC721Holder {
 
   function sendBorrowerNFTToTestContract() public {
     requestManagerTest.sendNFTToTestContract(msg.sender);
+  }
+
+  function sendLenderNFTToTestContract() public {
+    IERC721 nft = IERC721(commsRail.lenderNFTManager());
+    nft.safeTransferFrom(address(this), msg.sender, 0);
   }
 
   function testSupplyingABondRequest(uint64 amountIn, uint8 collatralIndex, uint8 borrowingIndex, uint8 percentage, uint16 termInHours, uint8 intrest)

@@ -11,8 +11,8 @@ contract BorrowerNFTManager is ERC721Burnable, Ownable, NFTManagerInterface {
   mapping(uint32 => bool) internal burned;
   uint32 internal totalNFTs;
 
-  constructor(address _commsRail, address _lenderNFTManager) ERC721('bond NFT borrower', 'BNFTB') Ownable(msg.sender) {
-    borrowerContract = new Borrower(_commsRail, _lenderNFTManager, address(this));
+  constructor(address _commsRail) ERC721('bond NFT borrower', 'BNFTB') Ownable(msg.sender) {
+    borrowerContract = new Borrower(_commsRail, address(this));
   }
 
   function getNextId() public onlyOwner returns (uint32) {
@@ -63,24 +63,27 @@ contract BorrowerNFTManager is ERC721Burnable, Ownable, NFTManagerInterface {
   }
 }
 
-contract Borrower is Bond {
-  constructor(address _commsRail, address _lenderNFTManager, address _borrowerNFTManager) Bond(_commsRail, _lenderNFTManager, _borrowerNFTManager) {}
+contract Borrower is Bond, InterfacesWithNFTManager {
+  constructor(address _commsRail, address _borrowerNFTManager)
+    Bond(_commsRail, _borrowerNFTManager)
+    InterfacesWithNFTManager(_borrowerNFTManager)
+  {}
 
   event Withdraw(address borrower, uint256 amount);
   event Deposit(address sender, address borrower, uint256 amount);
 
   function withdraw(uint32 id, uint256 amount) public {
-    emit Withdraw(borrowerNFTManager.getOwner(id), amount);
+    emit Withdraw(NFTManager.getOwner(id), amount);
     bondData memory data = getBondData(id);
-    require(msg.sender == borrowerNFTManager.getOwner(id), 'you are not the borrower');
+    require(msg.sender == NFTManager.getOwner(id), 'you are not the borrower');
     require(data.borrowingAmount - data.borrowed >= amount, 'you are trying to withdraw to much coins');
     data.borrowed += amount;
     setBondData(id, data);
-    commsRail.withdraw(keccak256(abi.encodePacked(data.borrowerId, data.lenderId)), borrowerNFTManager.getOwner(id), amount);
+    commsRail.withdraw(keccak256(abi.encodePacked(data.borrowerId, data.lenderId)), NFTManager.getOwner(id), amount);
   }
 
   function deposit(uint32 id, uint256 amount) public payable {
-    emit Deposit(msg.sender, borrowerNFTManager.getOwner(id), amount);
+    emit Deposit(msg.sender, NFTManager.getOwner(id), amount);
     bondData memory data = getBondData(id);
     // this can be called by anywone, for users with bots that want them to pay off debts.
     if (data.borrowingToken == address(0)) require(msg.value == amount, 'amount must match sent ETH');

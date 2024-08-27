@@ -9,8 +9,8 @@ import {BorrowerTest} from './NFT/borrowerNFT.t.sol';
 import {Test, console} from 'forge-std/Test.sol';
 
 contract AutomationManagerTest is Test {
-  BorrowerTest internal borrowerTest;
-  CommsRail internal commsRail;
+  BorrowerTest public borrowerTest;
+  CommsRail public commsRail;
   AutomationManager internal automationManager;
 
   address[] public tokenAddresses;
@@ -33,7 +33,7 @@ contract AutomationManagerTest is Test {
     uint8 percentage,
     uint16 termInHours,
     uint8 intrest
-  ) public returns (bool reverted) {
+  ) public payable returns (bool reverted) {
     withdrawAmount = uint8(bound(withdrawAmount, 0, 100));
     depositAmount = uint8(bound(depositAmount, 0, 100));
     amountIn = uint64(bound(amountIn, 3 * 10 ** 16, 10 ** 18));
@@ -48,12 +48,12 @@ contract AutomationManagerTest is Test {
     (bool upkeepNeeded,) = automationManager.checkUpkeep(bytes(''));
     if (upkeepNeeded) {
       try automationManager.performUpkeep(bytes('')) {}
-      catch Error(string memory errorMsg) {
-        if (keccak256(bytes(errorMsg)) == keccak256('ds-math-sub-underflow')) {
+      catch Error(string memory reason) {
+        if (keccak256(bytes(reason)) == keccak256('ds-math-sub-underflow')) {
           reverted = true;
           return reverted;
         } else {
-          require(false, errorMsg);
+          require(false, reason);
         }
       }
     }

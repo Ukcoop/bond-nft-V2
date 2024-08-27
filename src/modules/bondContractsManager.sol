@@ -20,8 +20,7 @@ contract BondContractsManager is HandlesETH, ReentrancyGuard {
   constructor(address _commsRail) {
     commsRail = CommsRail(_commsRail);
     lenderNFTManager = new LenderNFTManager(_commsRail);
-    borrowerNFTManager = new BorrowerNFTManager(_commsRail, address(lenderNFTManager));
-    lenderNFTManager.setAddress(address(borrowerNFTManager));
+    borrowerNFTManager = new BorrowerNFTManager(_commsRail);
   }
 
   function getBondPairs() public view returns (uintPair[] memory) {
@@ -79,7 +78,6 @@ contract BondContractsManager is HandlesETH, ReentrancyGuard {
     bondContractsData[bondId] = data;
   }
 
-  /*
   // slither-disable-start costly-loop
   function deleteBondPair(uint32 borrowerId, uint32 lenderId) internal {
     uint256 index = 0;
@@ -104,14 +102,15 @@ contract BondContractsManager is HandlesETH, ReentrancyGuard {
     bondPairs.pop();
   }
   // slither-disable-end costly-loop
-  */
+
   function liquidate(uint32 borrowerId, uint32 lenderId, uint256 quota) public {
     require(msg.sender == address(commsRail), 'you are not authorized to do this action');
+    deleteBondPair(borrowerId, lenderId);
     commsRail.liquidateLoan(
       keccak256(abi.encodePacked(borrowerId, lenderId)), borrowerNFTManager.ownerOf(borrowerId), lenderNFTManager.getContractAddress(), quota
     );
     borrowerNFTManager.burnBorrowerContract(borrowerId);
-    lenderNFTManager.setLiquidated(lenderId);
+    lenderNFTManager.setLiquidated(lenderId, quota);
   }
 
   function getBorrowersIds() public view returns (uint32[] memory) {

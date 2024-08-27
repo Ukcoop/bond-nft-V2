@@ -4,6 +4,17 @@ out = "out"
 libs = ["node_modules", "lib"]
 optimize = true
 optimizer_runs = 200
+gas_reports = [
+  "Borrower",
+  "BorrowerNFTManager",
+  "Lender",
+  "LenderNFTManager",
+  "AutomationManager",
+  "BondRequestBank",
+  "BondContractsManager",
+  "RequestManager",
+  "ExternalUtils"
+]
 
 [fuzz]
 runs = 5000

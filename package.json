@@ -6,6 +6,7 @@
     "dev": "npm run deploy-dev && next dev",
     "test": "forge test -vvv -f https://arb1.arbitrum.io/rpc",
     "coverage": "./generate_coverage.sh",
+    "gas-report": "./generate_gas_report.sh",
     "node": "anvil -f https://arb1.arbitrum.io/rpc",
     "deploy-dev": "node -r esm ts-scripts/deploy.ts",
     "compile": "forge build",
