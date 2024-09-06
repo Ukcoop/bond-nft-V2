@@ -121,14 +121,6 @@ contract BondContractsManager is HandlesETH, ReentrancyGuard {
     return lenderNFTManager.getIds(msg.sender);
   }
 
-  function getAddressOfBorrowerContract() public view returns (address) {
-    return borrowerNFTManager.getContractAddress();
-  }
-
-  function getAddressOfLenderContract() public view returns (address) {
-    return lenderNFTManager.getContractAddress();
-  }
-
   // slither-disable-start reentrancy-benign
   // slither-disable-start reentrancy-no-eth
   function lendToBorrower(bondRequest memory request) public payable nonReentrant {
@@ -147,7 +139,7 @@ contract BondContractsManager is HandlesETH, ReentrancyGuard {
 
     commsRail.deleteBondRequest(uint256(index));
 
-    address bondBankAddress = commsRail.getAddresses()[1];
+    address bondBankAddress = address(commsRail.bondBank());
     commsRail.spendFromBondContractsManager(request);
     uint256 requiredETHValue =
       (request.collatralToken == address(1) ? request.collatralAmount : 0) + (request.borrowingToken == address(1) ? borrowedAmount : 0);

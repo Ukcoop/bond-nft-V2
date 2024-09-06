@@ -43,14 +43,15 @@ contract RequestManager is HandlesETH {
   }
 
   // slither-disable-start calls-loop
-  function getBalances() public view returns (balancePair[] memory) {
-    balancePair[] memory res = new balancePair[](7);
+  function getBalances(address addr) public view returns (balancePair[] memory) {
+    uint len = whitelistedTokens.length;
+    balancePair[] memory res = new balancePair[](len);
     address[] memory _whitelistedTokens = whitelistedTokens;
 
-    res[0] = balancePair(address(1), msg.sender.balance);
+    res[0] = balancePair(address(1), addr.balance);
 
-    for (uint256 i = 1; i < 7; i++) {
-      res[i] = balancePair(_whitelistedTokens[i - 1], commsRail.getTokenBalance(_whitelistedTokens[i - 1], msg.sender));
+    for (uint256 i = 1; i < len; i++) {
+      res[i] = balancePair(_whitelistedTokens[i - 1], commsRail.getTokenBalance(_whitelistedTokens[i - 1], addr));
     }
 
     return res;

@@ -7,8 +7,8 @@
     "test": "forge test -vvv -f https://arb1.arbitrum.io/rpc",
     "coverage": "./generate_coverage.sh",
     "gas-report": "./generate_gas_report.sh",
-    "node": "anvil -f https://arb1.arbitrum.io/rpc",
-    "deploy-dev": "node -r esm ts-scripts/deploy.ts",
+    "node": "npx hardhat node",
+    "deploy-dev": "npm run compile && npx tsx ts-scripts/deploy.ts",
     "compile": "forge build",
     "audit": "slither . --exclude solc-version,pragma --filter-paths 'node_modules/|lib/|dependencies/'",
     "format": "forge fmt",
@@ -18,10 +18,16 @@
   },
   "dependencies": {
     "@chainlink/contracts": "^0.8.0",
+    "@emotion/react": "^11.11.4",
+    "@emotion/styled": "^11.11.5",
+    "@mui/icons-material": "^5.16.0",
+    "@mui/material": "^5.16.0",
+    "dotenv": "^16.4.5",
     "ethers": "^6.13.1",
     "next": "14.2.5",
     "react": "^18",
-    "react-dom": "^18"
+    "react-dom": "^18",
+    "token-icons": "^0.1.0-alpha.2"
   },
   "devDependencies": {
     "@types/node": "^20",
@@ -29,8 +35,9 @@
     "@types/react-dom": "^18",
     "eslint": "^8",
     "eslint-config-next": "14.2.5",
+    "hardhat": "^2.22.10",
     "postcss": "^8",
     "tailwindcss": "^3.4.1",
-    "typescript": "^5"
+    "typescript": "^5.5.4"
   }
 }

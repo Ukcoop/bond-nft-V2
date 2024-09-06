@@ -81,7 +81,7 @@ contract PriceOracleManager {
 
   function getPrice(uint256 amount, address addressA, address addressB) public view returns (uint256 price) {
     if (isConstant(addressA, addressB)) {
-      return (10 ** IERC20Metadata(addressB).decimals());
+      return ((amount * 10 ** IERC20Metadata(addressB).decimals()) / 10 ** (IERC20Metadata(addressA).decimals()));
     }
 
     if (needsInversed(addressA, addressB)) {
