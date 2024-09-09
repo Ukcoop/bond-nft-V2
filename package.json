@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "npm run deploy-dev && next dev",
     "test": "forge test -vvv -f https://arb1.arbitrum.io/rpc",
+    "e2e": "npx cypress run",
     "coverage": "./generate_coverage.sh",
     "gas-report": "./generate_gas_report.sh",
     "node": "npx hardhat node",
@@ -22,6 +23,7 @@
     "@emotion/styled": "^11.11.5",
     "@mui/icons-material": "^5.16.0",
     "@mui/material": "^5.16.0",
+    "cypress": "^13.14.2",
     "dotenv": "^16.4.5",
     "ethers": "^6.13.1",
     "next": "14.2.5",
