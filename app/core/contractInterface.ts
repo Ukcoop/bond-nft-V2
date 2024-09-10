@@ -3,8 +3,8 @@ import contracts from '../../constants/deploy-dev.json';
 import ABIs from '../../constants/ABIs.json';
 
 export default class contractInterface {
-  signer: any;
-  provider: any;
+  int: any;
+  ready: bool;
   commsRail: any;
   requestManager: any;
   bondContractsManager: any;
@@ -15,88 +15,43 @@ export default class contractInterface {
   borrower: any;
   lender: any;
 
-  async ensureSignerAvailable() {
-    if (this.signer !== undefined) return;
+  constructor(_int: any) {
+    this.int = _int;
+    this.ready = false;
+  }
 
-    try {
-      await window.ethereum.request({ method: 'eth_requestAccounts' });
-      this.signer = await this.provider.getSigner();
-    } catch (error) {
-      console.error("User denied account access or error occurred: ", error);
-    }
+  async ensureSignerAvailable() {
+    await this.int.ensureSignerAvailable(); 
   }
 
 
   async ensureLocalNodeNetwork() {
-    const localNodeUrl = 'http://127.0.0.1:8545';
-    const localNodeChainId = '0x7A69'; // 31137 in hexadecimal
-    
-    const localNodeParams = {
-      chainId: localNodeChainId,
-      chainName: 'Hardhat local node',
-      nativeCurrency: {
-        name: 'ETH',
-        symbol: 'ETH',
-        decimals: 18,
-      },
-      rpcUrls: [localNodeUrl],
-      blockExplorerUrls: null,
-    };
-
-    try {
-      await window.ethereum.request({
-        method: 'wallet_switchEthereumChain',
-        params: [{ chainId: localNodeChainId }],
-      });
-      console.log("Switched to the local node network");
-    } catch (switchError: any) {
-      if (switchError.code === 4902) {
-        try {
-          await window.ethereum.request({
-            method: 'wallet_addEthereumChain',
-            params: [localNodeParams],
-          });
-          console.log('Local node network added. Switching now...');
-          await window.ethereum.request({
-            method: 'wallet_switchEthereumChain',
-            params: [{ chainId: localNodeChainId }],
-          });
-          console.log('Switched to the local node network');
-        } catch (addError) {
-          console.error('Failed to add local node network: ', addError);
-        }
-      } else {
-        console.error('Failed to switch to the local node network: ', switchError);
-      }
-    }
+    await this.int.ensureLocalNodeNetwork();
   }
 
   async setup() {
-    await this.ensureLocalNodeNetwork();
+    await this.int.ensureLocalNodeNetwork();
 
     try {
-      if (window.ethereum == null) {
-        this.provider = ethers.getDefaultProvider();
-      } else {
-        this.provider = new ethers.BrowserProvider(window.ethereum);
-      }
+      await this.int.setup();
 
-      this.commsRail = new ethers.Contract(contracts.address, ABIs.CommsRail, this.provider);
+      this.commsRail = new ethers.Contract(contracts.address, ABIs.CommsRail, this.int.provider);
 
       const requestManagerAddress = await this.commsRail.requestManager();
-      this.requestManager = new ethers.Contract(requestManagerAddress, ABIs.RequestManager, this.provider);
+      this.requestManager = new ethers.Contract(requestManagerAddress, ABIs.RequestManager, this.int.provider);
       const bondContractsManagerAddress = await this.commsRail.bondContractsManager();
-      this.bondContractsManager = new ethers.Contract(bondContractsManagerAddress, ABIs.BondContractsManager, this.provider);
+      this.bondContractsManager = new ethers.Contract(bondContractsManagerAddress, ABIs.BondContractsManager, this.int.provider);
       const bondRequestBankAddress = await this.commsRail.bondRequestBank();
-      this.bondRequestBank = new ethers.Contract(bondRequestBankAddress, ABIs.BondRequestBank, this.provider);
+      this.bondRequestBank = new ethers.Contract(bondRequestBankAddress, ABIs.BondRequestBank, this.int.provider);
       const bondBankAddress = await this.commsRail.bondRequestBank();
-      this.bondBank = new ethers.Contract(bondBankAddress, ABIs.BondBank, this.provider);
+      this.bondBank = new ethers.Contract(bondBankAddress, ABIs.BondBank, this.int.provider);
 
       let borrowerAddress = await this.commsRail.borrower();
-      this.borrower = new ethers.Contract(borrowerAddress, ABIs.Borrower, this.provider);
+      this.borrower = new ethers.Contract(borrowerAddress, ABIs.Borrower, this.int.provider);
       let lenderAddress = await this.commsRail.lender();
-      this.lender = new ethers.Contract(lenderAddress, ABIs.Lender, this.provider);
+      this.lender = new ethers.Contract(lenderAddress, ABIs.Lender, this.int.provider);
 
+      this.ready = true;
     } catch {}
   }
 
@@ -119,18 +74,24 @@ export default class contractInterface {
   }
 
   async getBalances() {
-    return this.get2dArray(await this.requestManager.getBalances(this.signer.address));
+    try {
+      return this.get2dArray(await this.requestManager.getBalances(this.int.signer.address));
+    } catch (error) {
+      if(this.ready) {
+        throw error;
+      }
+    }
   }
 
   async postBondRequest(request) {
     let result;
     if(request[0] == '0x0000000000000000000000000000000000000001') {
-      result = await this.requestManager.connect(this.signer).postBondRequest(...request, {value: request[1]});
+      result = await this.requestManager.connect(this.int.signer).postBondRequest(...request, {value: request[1]});
     } else {
-      const token = new ethers.Contract(request[0], ABIs.IERC20, this.provider);
-      result = await(await token.connect(this.signer).approve(this.bondRequestBank.target, request[1])).wait();
-      result = await(await this.commsRail.connect(this.signer).submitEntry(request[0], this.signer.address, this.requestManager.target, request[1])).wait();
-      result = await this.requestManager.connect(this.signer).postBondRequest(...request);
+      const token = new ethers.Contract(request[0], ABIs.IERC20, this.int.provider);
+      result = await(await token.connect(this.int.signer).approve(this.bondRequestBank.target, request[1])).wait();
+      result = await(await this.commsRail.connect(this.int.signer).submitEntry(request[0], this.int.signer.address, this.requestManager.target, request[1])).wait();
+      result = await this.requestManager.connect(this.int.signer).postBondRequest(...request);
     }
     return result;
   }
@@ -138,12 +99,12 @@ export default class contractInterface {
   async lendToBorrower(request, amountRequired) {
     let result;
     if(request[1] == '0x0000000000000000000000000000000000000001') {
-      result = await(await this.bondContractsManager.connect(this.signer).lendToBorrower(request, {value: amountRequired})).wait();
+      result = await(await this.bondContractsManager.connect(this.int.signer).lendToBorrower(request, {value: amountRequired})).wait();
     } else {
-      const token = new ethers.Contract(request[3], ABIs.IERC20, this.provider);
-      result = await(await token.connect(this.signer).approve(this.bondRequestBank.target, amountRequired)).wait();
-      result = await(await this.commsRail.connect(this.signer).submitEntry(request[3], this.signer.address, this.bondContractsManager.target, amountRequired)).wait();
-      result = await this.bondContractsManager.connect(this.signer).lendToBorrower(request);
+      const token = new ethers.Contract(request[3], ABIs.IERC20, this.int.provider);
+      result = await(await token.connect(this.int.signer).approve(this.bondRequestBank.target, amountRequired)).wait();
+      result = await(await this.commsRail.connect(this.int.signer).submitEntry(request[3], this.int.signer.address, this.bondContractsManager.target, amountRequired)).wait();
+      result = await this.bondContractsManager.connect(this.int.signer).lendToBorrower(request);
     }
     return result;
   }
@@ -163,8 +124,8 @@ export default class contractInterface {
 
   async getNFTData() {
     let res = [];
-    res.push(Array.from(await this.bondContractsManager.connect(this.signer).getBorrowersIds()));
-    res.push(Array.from(await this.bondContractsManager.connect(this.signer).getLendersIds()));
+    res.push(Array.from(await this.bondContractsManager.connect(this.int.signer).getBorrowersIds()));
+    res.push(Array.from(await this.bondContractsManager.connect(this.int.signer).getLendersIds()));
 
     if(res[0].length == 0 && res[1].length == 0) return [[], []];
 
@@ -180,23 +141,23 @@ export default class contractInterface {
   }
 
   async cancelBondRequest(request) {
-    await(await this.requestManager.connect(this.signer).cancelBondRequest(request)).wait();
+    await(await this.requestManager.connect(this.int.signer).cancelBondRequest(request)).wait();
   }
 
   async lenderWithdraw(bondId) {
-    await(await this.lender.connect(this.signer).withdraw(bondId)).wait();
+    await(await this.lender.connect(this.int.signer).withdraw(bondId)).wait();
   }
 
   async borrowerDeposit(bond, amount) {
     let res;
 
     if(bond[7] == '0x0000000000000000000000000000000000000001') {
-      res = await(await this.borrower.connect(this.signer).deposit(bond[0], amount, {value: amount})).wait();
+      res = await(await this.borrower.connect(this.int.signer).deposit(bond[0], amount, {value: amount})).wait();
     } else {
       console.log(bond);
-      const token = new ethers.Contract(bond[7], ABIs.IERC20, this.provider);
-      res = await(await token.connect(this.signer).approve(this.bondBank.target, amount)).wait();
-      res = await(await this.borrower.connect(this.signer).deposit(bond[0], amount)).wait();
+      const token = new ethers.Contract(bond[7], ABIs.IERC20, this.int.provider);
+      res = await(await token.connect(this.int.signer).approve(this.bondBank.target, amount)).wait();
+      res = await(await this.borrower.connect(this.int.signer).deposit(bond[0], amount)).wait();
     }
 
     return res;
@@ -208,9 +169,9 @@ export default class contractInterface {
     console.log(amount);
 
     if(bond[7] == '0x0000000000000000000000000000000000000001') {
-      res = await(await this.borrower.connect(this.signer).withdraw(bond[0], amount)).wait(); 
+      res = await(await this.borrower.connect(this.int.signer).withdraw(bond[0], amount)).wait(); 
     } else {
-      res = await(await this.borrower.connect(this.signer).withdraw(bond[0], amount)).wait();
+      res = await(await this.borrower.connect(this.int.signer).withdraw(bond[0], amount)).wait();
     }
   }
 }

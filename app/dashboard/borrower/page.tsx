@@ -13,6 +13,8 @@ import InputField from '../../components/inputField';
 import Status from '../../components/status';
 import NavBar from '../../components/navbar';
 
+import browserWalletInterface from '../../core/browserWalletInterface';
+import testWalletnterface from '../../core/testWalletInterface';
 import contractInterface from '../../core/contractInterface';
 
 function formatTokenAmount(amount, decimals) {
@@ -55,7 +57,9 @@ function convertHours(hours) {
 }
 
 export default function NFTDashboard() {
-  let contract = new contractInterface();
+  //let contract = new contractInterface(new browserWalletInterface());
+  let contract = new contractInterface(new testWalletnterface());
+
   const searchParams = useSearchParams();
   let id = parseInt(searchParams.get('id'));
   const [data, setData] = useState([]);

@@ -12,6 +12,8 @@ import { image } from 'token-icons';
 import Status from '../../components/status';
 import NavBar from '../../components/navbar';
 
+import browserWalletInterface from '../../core/browserWalletInterface';
+import testWalletnterface from '../../core/testWalletInterface';
 import contractInterface from '../../core/contractInterface';
 
 function formatTokenAmount(amount, decimals) {
@@ -54,7 +56,9 @@ function convertHours(hours) {
 }
 
 export default function NewBond() {
-  let contract = new contractInterface();
+  //let contract = new contractInterface(new browserWalletInterface());
+  let contract = new contractInterface(new testWalletnterface());
+
   const searchParams = useSearchParams();
   const bondRequest = atob(searchParams.get('bondRequest')).split(",");
   const [borrowingAmount, setBorrowingAmount] = useState(0);

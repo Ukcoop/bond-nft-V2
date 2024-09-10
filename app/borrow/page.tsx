@@ -11,6 +11,9 @@ import { image } from 'token-icons';
 import NavBar from '../components/navbar';
 import DropDownMenu from '../components/dropdownMenu';
 import Status from '../components/status';
+
+import browserWalletInterface from '../core/browserWalletInterface';
+import testWalletnterface from '../core/testWalletInterface';
 import contractInterface from '../core/contractInterface';
 
 import Slider from '@mui/material/Slider';
@@ -31,7 +34,9 @@ function formatTokenAmount(amount, decimals) {
 }
 
 export default function Borrow() {
-  let contract = new contractInterface();
+  //let contract = new contractInterface(new browserWalletInterface());
+  let contract = new contractInterface(new testWalletnterface());
+
   const [status, setStatus] = useState({code: 'loading', data: ''});
   const [coinOptions, setCoinOptions] = useState([]);
   const [collatralToken, setCollatralToken] = useState({key: 'null', component: (<div className="mx-2">nothing selected</div>)});
@@ -51,6 +56,7 @@ export default function Borrow() {
 
     try { 
       let getBalances = await contract.getBalances();
+      if(getBalances == undefined) return;
       setStatus({code: 'ok', data: ''});
 
       for(let i = 0; i < tokens.length; i++) {
@@ -65,6 +71,7 @@ export default function Borrow() {
       if(error.toString().split('Error: execution reverted (no data present; likely require(false) occurred').length > 1) {
         setStatus({code: 'error', data: 'unrecoverable error, please reset the test enviorment'});
       } else {
+        console.log(error);
         let processedError = error.toString().split('(')[0].split('Error: ')[1];
         setStatus({code: 'error', data: processedError});
       } 
@@ -115,6 +122,7 @@ export default function Borrow() {
       setStatus({code: 'success', data:'transaction completed'});
       await reset();
     } catch (error) {
+      console.log(error);
       let processedError = error.toString().split('(')[0].split('Error: ')[1];
       setStatus({code: 'error', data: processedError});
     }

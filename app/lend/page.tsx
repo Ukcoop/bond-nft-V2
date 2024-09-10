@@ -5,10 +5,13 @@ import { useEffect, useState } from 'react';
 import NavBar from '../components/navbar';
 import BondRequest from '../components/bondRequest';
 import Status from '../components/status';
+
+import browserWalletInterface from '../core/browserWalletInterface';
+import testWalletnterface from '../core/testWalletInterface';
 import contractInterface from '../core/contractInterface';
 
 export default function Lend() {
-  let contract = new contractInterface();
+  let contract = new contractInterface(new browserWalletInterface());
 
   const [requests, setRequests] = useState([]);
   const [status, setStatus] = useState({code: 'loading', data: ''});
