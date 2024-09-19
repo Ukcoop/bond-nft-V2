@@ -1,5 +1,6 @@
 'use client';
 
+import 'dotenv/config';
 import { useEffect, useState } from 'react';
 
 import toDecimalsMapping from '../../constants/toDecimalsMapping.json';
@@ -34,8 +35,7 @@ function formatTokenAmount(amount, decimals) {
 }
 
 export default function Borrow() {
-  //let contract = new contractInterface(new browserWalletInterface());
-  let contract = new contractInterface(new testWalletnterface());
+  let contract = (process.env.PREFERRED_CONN_TYPE == true) ? new contractInterface(new testWalletnterface()) : new contractInterface(new browserWalletInterface());
 
   const [status, setStatus] = useState({code: 'loading', data: ''});
   const [coinOptions, setCoinOptions] = useState([]);

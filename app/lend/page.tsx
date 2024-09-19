@@ -11,7 +11,7 @@ import testWalletnterface from '../core/testWalletInterface';
 import contractInterface from '../core/contractInterface';
 
 export default function Lend() {
-  let contract = new contractInterface(new browserWalletInterface());
+  let contract = (process.env.PREFERRED_CONN_TYPE == true) ? new contractInterface(new testWalletnterface()) : new contractInterface(new browserWalletInterface());
 
   const [requests, setRequests] = useState([]);
   const [status, setStatus] = useState({code: 'loading', data: ''});

@@ -56,8 +56,7 @@ function convertHours(hours) {
 }
 
 export default function NewBond() {
-  //let contract = new contractInterface(new browserWalletInterface());
-  let contract = new contractInterface(new testWalletnterface());
+  let contract = (process.env.PREFERRED_CONN_TYPE == true) ? new contractInterface(new testWalletnterface()) : new contractInterface(new browserWalletInterface());
 
   const searchParams = useSearchParams();
   const bondRequest = atob(searchParams.get('bondRequest')).split(",");

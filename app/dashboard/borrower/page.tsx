@@ -57,8 +57,7 @@ function convertHours(hours) {
 }
 
 export default function NFTDashboard() {
-  //let contract = new contractInterface(new browserWalletInterface());
-  let contract = new contractInterface(new testWalletnterface());
+  let contract = (process.env.PREFERRED_CONN_TYPE == true) ? new contractInterface(new testWalletnterface()) : new contractInterface(new browserWalletInterface());
 
   const searchParams = useSearchParams();
   let id = parseInt(searchParams.get('id'));

@@ -12,8 +12,7 @@ import testWalletnterface from '../core/testWalletInterface';
 import contractInterface from '../core/contractInterface'
 
 export default function Dashboard() {
-  //let contract = new contractInterface(new browserWalletInterface());
-  let contract = new contractInterface(new testWalletnterface());  
+  let contract = (process.env.PREFERRED_CONN_TYPE == true) ? new contractInterface(new testWalletnterface()) : new contractInterface(new browserWalletInterface());
 
   const [ids, setIds] = useState([[],[]]);
   const [requests, setRequests] = useState([]);
