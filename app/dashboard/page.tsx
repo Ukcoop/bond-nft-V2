@@ -39,6 +39,7 @@ export default function Dashboard() {
         setBorrowingTokenAmounts(newBorrowingTokenAmounts);
         setStatus({code: 'ok', data: ''});
       } catch (error) {
+        console.log(error);
         let processedError = error.toString().split('(')[0].split('Error: ')[1];
         setStatus({code: 'error', data: processedError});
       }

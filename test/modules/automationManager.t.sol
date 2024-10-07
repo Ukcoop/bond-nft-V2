@@ -43,6 +43,8 @@ contract AutomationManagerTest is Test {
     reverted = borrowerTest.testBorrowerNFTFunctions{value: amountIn}(
       withdrawAmount, depositAmount, amountIn, collatralIndex, borrowingIndex, percentage, termInHours, intrest
     );
+
+    console.log(reverted);
     if (reverted) return reverted;
 
     (bool upkeepNeeded,) = automationManager.checkUpkeep(bytes(''));

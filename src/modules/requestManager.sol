@@ -16,7 +16,6 @@ contract RequestManager is HandlesETH {
     _whitelistedTokens[2] = 0xaf88d065e77c8cC2239327C5EDb3A432268e5831; // USDC
     _whitelistedTokens[3] = 0x2f2a2543B76A4166549F7aaB2e75Bef0aefC5B0f; // wrapped BTC
     _whitelistedTokens[4] = 0xDA10009cBd5D07dd0CeCc66161FC93D7c9000da1; // DAI
-    //_whitelistedTokens[5] = 0x4D15a3A2286D883AF0AA1B3f21367843FAc63E07; // TUSD
     _whitelistedTokens[5] = address(1); // native ETH
     whitelistedTokens = _whitelistedTokens;
 
@@ -44,7 +43,7 @@ contract RequestManager is HandlesETH {
 
   // slither-disable-start calls-loop
   function getBalances(address addr) public view returns (balancePair[] memory) {
-    uint len = whitelistedTokens.length;
+    uint256 len = whitelistedTokens.length;
     balancePair[] memory res = new balancePair[](len);
     address[] memory _whitelistedTokens = whitelistedTokens;
 
@@ -85,29 +84,15 @@ contract RequestManager is HandlesETH {
     return res;
   }
 
-  function spendFromBondContractsManager(address contractAddress, bondRequest calldata request) public {
-    require(msg.sender == address(commsRail), 'you are not authorized to do this action');
-    if (request.collatralToken == address(1)) {
-      sendViaCall(contractAddress, request.collatralAmount);
-    } else {
-      (bool passed, uint256 index) = commsRail.spenderCanSpendAmount(address(this), request.borrower, request.collatralToken, request.collatralAmount);
-      require(passed, 'an entry was not found with the minimum amount');
-      commsRail.spendEntry(contractAddress, index, request.collatralAmount);
-    }
-  }
-
   function postBondRequest(
+    address borrower,
     address collatralToken,
     uint256 collatralAmount,
     address borrowingToken,
     uint32 borrowingPercentage,
     uint32 termInHours,
     uint32 intrestYearly
-  ) public payable {
-    if (collatralToken == address(1)) require(msg.value != 0, 'can not use 0 ETH as collatral');
-    if (collatralToken == address(1)) {
-      require(msg.value == collatralAmount, 'the collatralAmount must match the eth sent');
-    }
+  ) public {
     require(collatralAmount != 0, 'cant post a bond with no collatral');
     if (collatralToken != address(1)) require(isWhitelistedToken(collatralToken), 'this token is not whitelisted');
     if (borrowingToken != address(1)) require(isWhitelistedToken(borrowingToken), 'this token is not whitelisted');
@@ -115,13 +100,11 @@ contract RequestManager is HandlesETH {
     require(termInHours >= 24, 'bond length is too short');
     require(intrestYearly >= 2 && intrestYearly <= 15, 'intrest is not in this range: (2 to 15)%');
 
-    bondRequests.push(bondRequest(msg.sender, collatralToken, collatralAmount, borrowingToken, borrowingPercentage, termInHours, intrestYearly));
+    bondRequests.push(bondRequest(borrower, collatralToken, collatralAmount, borrowingToken, borrowingPercentage, termInHours, intrestYearly));
 
-    if (collatralToken != address(1)) {
-      // slither-disable-next-line unused-return
-      (bool passed,) = commsRail.spenderCanSpendAmount(address(this), msg.sender, collatralToken, collatralAmount);
-      require(passed, 'an entry was not found with the minimum amount');
-    }
+    // slither-disable-next-line unused-return
+    (bool passed,) = commsRail.requestEntryExists(borrower, collatralToken, borrowingToken, collatralAmount);
+    require(passed, 'this entry was not found or has not been made yet');
   }
 
   function _deleteBondRequest(uint256 index) internal {
@@ -142,16 +125,12 @@ contract RequestManager is HandlesETH {
     _deleteBondRequest(index);
   }
 
-  function cancelBondRequest(bondRequest calldata request) public {
+  function cancelBondRequest(address borrower, bondRequest calldata request) public {
     bondRequest[] memory _bondRequests = bondRequests;
     int256 index = indexOfBondRequest(request);
     require(index != -1, 'no bond request for this address');
-    require(_bondRequests[uint256(index)].borrower == msg.sender, 'not the borrower');
-    uint256 amount = _bondRequests[uint256(index)].collatralAmount;
-    address token = _bondRequests[uint256(index)].collatralToken;
+    require(_bondRequests[uint256(index)].borrower == borrower, 'not the borrower');
     _deleteBondRequest(uint256(index));
-    (bool passed, uint256 i) = commsRail.spenderCanSpendAmount(address(this), msg.sender, token, amount);
-    require(passed, 'this bond request may be invalid');
-    commsRail.spendEntry(request.borrower, i, amount);
+    commsRail.cancelRequestEntry(request.borrower, request.collatralToken, request.borrowingToken, request.collatralAmount);
   }
 }

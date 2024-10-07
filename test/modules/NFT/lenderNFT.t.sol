@@ -26,7 +26,7 @@ contract LenderTest is Test, HandlesETH, ERC721Holder {
     automationManagerTest = new AutomationManagerTest();
     automationManagerTest.setUp();
     commsRail = automationManagerTest.commsRail();
-    lender = Lender(payable(commsRail.lender()));
+    lender = Lender(payable(commsRail.lenderContract()));
     BorrowerTest borrowerTest = automationManagerTest.borrowerTest();
     bondContractsManagerTest = borrowerTest.bondContractsManagerTest();
     tokenAddresses = commsRail.getWhitelistedTokens();
@@ -53,7 +53,7 @@ contract LenderTest is Test, HandlesETH, ERC721Holder {
     ) returns (bool _reverted) {
       reverted = _reverted;
     } catch Error(string memory reason) {
-      if(keccak256(bytes(reason)) == keccak256('ERC20: transfer amount exceeds balance')) {
+      if (keccak256(bytes(reason)) == keccak256('ERC20: transfer amount exceeds balance')) {
         reverted = true;
         return reverted;
       } else {

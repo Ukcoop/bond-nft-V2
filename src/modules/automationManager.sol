@@ -19,7 +19,7 @@ contract AutomationManager is AutomationCompatibleInterface {
   function checkUpkeep(bytes calldata) external view override returns (bool upkeepNeeded, bytes memory data) {
     upkeepNeeded = false;
     data = bytes('');
-    BondQueries bondContractInstance = BondQueries(commsRail.lender());
+    BondQueries bondContractInstance = BondQueries(commsRail.lenderContract());
     uintPair[] memory bondPairs = commsRail.getBondPairs();
     uint256 len = bondPairs.length;
 
@@ -35,7 +35,7 @@ contract AutomationManager is AutomationCompatibleInterface {
   }
 
   function performUpkeep(bytes calldata) external override {
-    BondQueries bondContractInstance = BondQueries(commsRail.lender());
+    BondQueries bondContractInstance = BondQueries(commsRail.lenderContract());
     uintPair[] memory bondPairs = commsRail.getBondPairs();
     uint256 len = bondPairs.length;
 

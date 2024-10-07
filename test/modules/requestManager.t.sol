@@ -6,7 +6,7 @@ import '@openzeppelin-contracts-5.0.2/token/ERC721/IERC721.sol';
 import '@openzeppelin-contracts-5.0.2/token/ERC721/utils/ERC721Holder.sol';
 
 import {CommsRail} from '../../src/comms/commsRail.sol';
-import {BondRequestBank} from '../../src/modules/bank.sol';
+import {UnifiedBondBank} from '../../src/modules/bank.sol';
 
 import {BondContractsManager} from '../../src/modules/bondContractsManager.sol';
 import {RequestManager} from '../../src/modules/requestManager.sol';
@@ -19,18 +19,18 @@ contract RequestManagerTest is Test, ERC721Holder {
   BondContractsManager public bondContractsManager;
 
   address[] public tokenAddresses;
-  address public bondRequestBank;
+  address public unifiedBondBank;
 
   function setUp() public {
     commsRail = new CommsRail();
-    BondRequestBank testBank = new BondRequestBank(address(commsRail));
+    UnifiedBondBank testBank = new UnifiedBondBank(address(commsRail));
     requestManager = new RequestManager(address(commsRail));
     bondContractsManager = new BondContractsManager(address(commsRail));
-    bondRequestBank = address(testBank);
+    unifiedBondBank = address(testBank);
     address[2] memory nftAddresses = bondContractsManager.getNFTAddresses();
     commsRail.addAddress(nftAddresses[0], 'BorrowerNFTManager');
     commsRail.addAddress(address(bondContractsManager), 'BondContractsManager');
-    commsRail.addAddress(address(testBank), 'BondRequestBank');
+    commsRail.addAddress(address(testBank), 'UnifiedBondBank');
     commsRail.addAddress(address(requestManager), 'RequestManager');
     tokenAddresses = requestManager.getWhitelistedTokens();
   }
@@ -62,7 +62,7 @@ contract RequestManagerTest is Test, ERC721Holder {
     address borrowing = tokenAddresses[borrowingIndex];
 
     if (collatral == address(1)) {
-      try requestManager.postBondRequest{value: amountIn}(collatral, amountIn, borrowing, percentage, termInHours, intrest) {
+      try commsRail.createBondRequest{value: amountIn}(collatral, amountIn, borrowing, percentage, termInHours, intrest) {
         require(!expectRevert, 'failed to revert');
       } catch {
         require(expectRevert, 'reverted unexpectidly');
@@ -74,9 +74,8 @@ contract RequestManagerTest is Test, ERC721Holder {
       }
       IERC20 token = IERC20(collatral);
       uint256 amount = token.balanceOf(address(this));
-      token.approve(bondRequestBank, amount);
-      commsRail.submitEntry(collatral, address(this), address(requestManager), amount);
-      try requestManager.postBondRequest(collatral, amount, borrowing, percentage, termInHours, intrest) {
+      token.approve(unifiedBondBank, amount);
+      try commsRail.createBondRequest(collatral, amount, borrowing, percentage, termInHours, intrest) {
         require(!expectRevert, 'failed to revert');
       } catch {
         require(expectRevert, 'reverted unexpectidly');

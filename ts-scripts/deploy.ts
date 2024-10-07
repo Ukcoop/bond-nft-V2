@@ -25,8 +25,7 @@ async function deploy() {
 
   console.log('Deploying project...');
   const commsRail: any = await deployContract('commsRail.sol', 'CommsRail', [], signer);
-  const testBank = await deployContract('bank.sol', 'BondRequestBank', [commsRail.target], signer);
-  const testBondBank = await deployContract('bank.sol', 'BondBank', [commsRail.target], signer);
+  const unifiedBondBank = await deployContract('bank.sol', 'UnifiedBondBank', [commsRail.target], signer);
   const requestManager = await deployContract('requestManager.sol', 'RequestManager', [commsRail.target], signer);
   const bondContractsManager: any = await deployContract('bondContractsManager.sol', 'BondContractsManager', [commsRail.target], signer);
   const automationManager = await deployContract('automationManager.sol', 'AutomationManager', [commsRail.target, false], signer);
@@ -34,8 +33,7 @@ async function deploy() {
   const nftAddresses = await bondContractsManager.getNFTAddresses();
   const bondAddresses = await bondContractsManager.getBondAddresses();
 
-  await commsRail.addAddress((testBank.target), 'BondRequestBank');
-  await commsRail.addAddress((testBondBank.target), 'BondBank');
+  await commsRail.addAddress((unifiedBondBank.target), 'UnifiedBondBank');
   await commsRail.addAddress((requestManager.target), 'RequestManager');
   await commsRail.addAddress((bondContractsManager.target), 'BondContractsManager');
   await commsRail.addAddress(nftAddresses[0], 'BorrowerNFTManager');

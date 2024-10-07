@@ -64,10 +64,7 @@ contract BorrowerNFTManager is ERC721Burnable, Ownable, NFTManagerInterface {
 }
 
 contract Borrower is Bond, InterfacesWithNFTManager {
-  constructor(address _commsRail, address _borrowerNFTManager)
-    Bond(_commsRail, _borrowerNFTManager)
-    InterfacesWithNFTManager(_borrowerNFTManager)
-  {}
+  constructor(address _commsRail, address _borrowerNFTManager) Bond(_commsRail, _borrowerNFTManager) InterfacesWithNFTManager(_borrowerNFTManager) {}
 
   event Withdraw(address borrower, uint256 amount);
   event Deposit(address sender, address borrower, uint256 amount);

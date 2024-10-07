@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
-import '@openzeppelin-contracts-5.0.2/token/ERC20/IERC20.sol';
 import '@openzeppelin-contracts-5.0.2/utils/ReentrancyGuard.sol';
 
 import {CommsRail} from '../comms/commsRail.sol';
@@ -106,9 +105,7 @@ contract BondContractsManager is HandlesETH, ReentrancyGuard {
   function liquidate(uint32 borrowerId, uint32 lenderId, uint256 quota) public {
     require(msg.sender == address(commsRail), 'you are not authorized to do this action');
     deleteBondPair(borrowerId, lenderId);
-    commsRail.liquidateLoan(
-      keccak256(abi.encodePacked(borrowerId, lenderId)), borrowerNFTManager.ownerOf(borrowerId), lenderNFTManager.getContractAddress(), quota
-    );
+    commsRail.liquidateLoan(keccak256(abi.encodePacked(borrowerId, lenderId)), borrowerNFTManager.ownerOf(borrowerId), quota);
     borrowerNFTManager.burnBorrowerContract(borrowerId);
     lenderNFTManager.setLiquidated(lenderId, quota);
   }
@@ -139,30 +136,16 @@ contract BondContractsManager is HandlesETH, ReentrancyGuard {
 
     commsRail.deleteBondRequest(uint256(index));
 
-    address bondBankAddress = address(commsRail.bondBank());
-    commsRail.spendFromBondContractsManager(request);
-    uint256 requiredETHValue =
-      (request.collatralToken == address(1) ? request.collatralAmount : 0) + (request.borrowingToken == address(1) ? borrowedAmount : 0);
-    uint256 totalToApprove = 0;
-
     if (request.borrowingToken != address(1)) {
-      (bool status, uint256 i) = commsRail.spenderCanSpendAmount(address(this), msg.sender, request.borrowingToken, borrowedAmount);
-      require(status, 'an entry was not found with the minimum amount');
-      commsRail.spendEntry(address(this), i, borrowedAmount);
-      if (request.borrowingToken == request.collatralToken) {
-        totalToApprove = borrowedAmount;
-      } else {
-        require(IERC20(request.borrowingToken).approve(bondBankAddress, borrowedAmount), 'approve failed');
-      }
+      commsRail.compelteBondEntry(
+        request.borrower, msg.sender, borrowerId, lenderId, request.collatralToken, request.borrowingToken, request.collatralAmount, borrowedAmount
+      );
+    } else {
+      //slither-disable-next-line arbitrary-send-eth
+      commsRail.compelteBondEntry{value: borrowedAmount}(
+        request.borrower, msg.sender, borrowerId, lenderId, request.collatralToken, request.borrowingToken, request.collatralAmount, borrowedAmount
+      );
     }
-
-    if (request.collatralToken != address(1)) {
-      require(IERC20(request.collatralToken).approve(bondBankAddress, totalToApprove + request.collatralAmount), 'approve failed');
-    }
-    //slither-disable-next-line arbitrary-send-eth
-    commsRail.submitBondEntry{value: requiredETHValue}(
-      keccak256(abi.encodePacked(borrowerId, lenderId)), request.collatralToken, request.borrowingToken, request.collatralAmount, borrowedAmount
-    );
   }
   // slither-disable-end reentrancy-benign
   // slither-disable-end reentrancy-no-eth

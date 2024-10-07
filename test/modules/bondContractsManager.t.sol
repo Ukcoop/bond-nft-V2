@@ -6,7 +6,6 @@ import '@openzeppelin-contracts-5.0.2/token/ERC721/IERC721.sol';
 import '@openzeppelin-contracts-5.0.2/token/ERC721/utils/ERC721Holder.sol';
 
 import {CommsRail} from '../../src/comms/commsRail.sol';
-import {BondBank} from '../../src/modules/bank.sol';
 import {BondContractsManager} from '../../src/modules/bondContractsManager.sol';
 import {RequestManager} from '../../src/modules/requestManager.sol';
 
@@ -17,28 +16,25 @@ import {Test, console} from 'forge-std/Test.sol';
 contract BondContractsManagerTest is Test, HandlesETH, ERC721Holder {
   CommsRail public commsRail;
   BondContractsManager public bondContractsManager;
-  BondBank public bondBank;
   RequestManager public requestManager;
   RequestManagerTest public requestManagerTest;
 
   address[] public tokenAddresses;
-  address public bondRequestBank;
+  address public unifiedBondBank;
 
   function setUp() public {
     requestManagerTest = new RequestManagerTest();
     requestManagerTest.setUp();
     commsRail = requestManagerTest.commsRail();
     bondContractsManager = requestManagerTest.bondContractsManager();
-    bondBank = new BondBank(address(commsRail));
     address[2] memory nftAddresses = bondContractsManager.getNFTAddresses();
     address[2] memory bondAddresses = bondContractsManager.getBondAddresses();
     requestManagerTest.addAddress(nftAddresses[1], 'LenderNFTManager');
     requestManagerTest.addAddress(bondAddresses[0], 'Borrower');
     requestManagerTest.addAddress(bondAddresses[1], 'Lender');
-    requestManagerTest.addAddress(address(bondBank), 'BondBank');
     requestManager = requestManagerTest.requestManager();
     tokenAddresses = requestManager.getWhitelistedTokens();
-    bondRequestBank = requestManagerTest.bondRequestBank();
+    unifiedBondBank = requestManagerTest.unifiedBondBank();
   }
 
   function sendBorrowerNFTToTestContract() public {
@@ -80,8 +76,7 @@ contract BondContractsManagerTest is Test, HandlesETH, ERC721Holder {
       IERC20 token = IERC20(request.borrowingToken);
       uint256 amount = token.balanceOf(address(this));
       if (amount < amountRequired) vm.assume(false);
-      token.approve(bondRequestBank, amountRequired);
-      commsRail.submitEntry(request.borrowingToken, address(this), address(bondContractsManager), amountRequired);
+      token.approve(unifiedBondBank, amountRequired);
       bondContractsManager.lendToBorrower(request);
     }
   }

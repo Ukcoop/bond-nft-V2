@@ -67,7 +67,7 @@ abstract contract HandlesETH {
 }
 
 contract InterfacesWithNFTManager {
-  //slither-disable-next-line naming-convention  
+  //slither-disable-next-line naming-convention
   NFTManagerInterface internal immutable NFTManager;
 
   constructor(address _NFTManager) {

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
-import {BondBank, BondRequestBank} from '../modules/bank.sol';
+import {UnifiedBondBank} from '../modules/bank.sol';
 
 import {BondContractsManager} from '../modules/bondContractsManager.sol';
 import {RequestManager} from '../modules/requestManager.sol';
@@ -13,14 +13,13 @@ import {PriceOracleManager} from '../utils/priceOracleManager.sol';
 contract CommsRail {
   ExternalUtils public immutable externalUtils;
   PriceOracleManager internal immutable priceOracleManager;
-  BondRequestBank public bondRequestBank;
-  BondBank public bondBank;
+  UnifiedBondBank public unifiedBondBank;
   RequestManager public requestManager;
   BondContractsManager public bondContractsManager;
   address public borrowerNFTManager;
   address public lenderNFTManager;
-  address public borrower;
-  address public lender;
+  address public borrowerContract;
+  address public lenderContract;
   address public automationManager;
   address internal immutable deployer;
 
@@ -34,11 +33,9 @@ contract CommsRail {
     require(msg.sender == deployer, 'you are not authorized to do this action');
     require(contractAddress != address(0), 'contractAddress can not be address(0)');
 
-    if (keccak256(bytes(contractName)) == keccak256('BondRequestBank')) {
-      require(address(bondRequestBank) == address(0), 'this interface was allredy defined');
-      bondRequestBank = BondRequestBank(payable(contractAddress));
-    } else if (keccak256(bytes(contractName)) == keccak256('BondBank')) {
-      bondBank = BondBank(payable(contractAddress));
+    if (keccak256(bytes(contractName)) == keccak256('UnifiedBondBank')) {
+      require(address(unifiedBondBank) == address(0), 'this interface was allredy defined');
+      unifiedBondBank = UnifiedBondBank(payable(contractAddress));
     } else if (keccak256(bytes(contractName)) == keccak256('RequestManager')) {
       require(address(requestManager) == address(0), 'this interface was allredy defined');
       requestManager = RequestManager(payable(contractAddress));
@@ -52,11 +49,11 @@ contract CommsRail {
       require(lenderNFTManager == address(0), 'this interface was allredy defined');
       lenderNFTManager = contractAddress;
     } else if (keccak256(bytes(contractName)) == keccak256('Borrower')) {
-      require(borrower == address(0), 'this interface was allredy defined');
-      borrower = contractAddress;
+      require(borrowerContract == address(0), 'this interface was allredy defined');
+      borrowerContract = contractAddress;
     } else if (keccak256(bytes(contractName)) == keccak256('Lender')) {
-      require(lender == address(0), 'this interface was allredy defined');
-      lender = contractAddress;
+      require(lenderContract == address(0), 'this interface was allredy defined');
+      lenderContract = contractAddress;
     } else if (keccak256(bytes(contractName)) == keccak256('AutomationManager')) {
       require(automationManager == address(0), 'this interface was allredy defined');
       automationManager = contractAddress;
@@ -93,41 +90,49 @@ contract CommsRail {
     return priceOracleManager.getPrice(amount, addressA, addressB);
   }
 
-  function spenderCanSpendAmount(address spender, address allower, address coin, uint256 amount) public view returns (bool, uint256) {
-    require(msg.sender == address(requestManager) || msg.sender == address(bondContractsManager), 'you are not authorized to do this action');
-    // slither-disable-next-line unused-return
-    return bondRequestBank.spenderCanSpendAmount(spender, allower, coin, amount);
-  }
-
-  function submitEntry(address coin, address allower, address spender, uint256 amount) public payable {
-    return bondRequestBank.submitEntry{value: msg.value}(coin, allower, spender, amount);
-  }
-
-  function submitBondEntry(bytes32 uid, address collatralToken, address borrowingToken, uint256 collatralAmount, uint256 borrowingAmount)
+  function requestEntryExists(address borrower, address collatralToken, address borrowingToken, uint256 collatralAmount)
     public
-    payable
+    view
+    returns (bool, uint256)
   {
-    return bondBank.submitBondEntry{value: msg.value}(msg.sender, uid, collatralToken, borrowingToken, collatralAmount, borrowingAmount);
-  }
-
-  function spendEntry(address to, uint256 index, uint256 amount) public {
     require(msg.sender == address(requestManager) || msg.sender == address(bondContractsManager), 'you are not authorized to do this action');
-    return bondRequestBank.spendEntry(msg.sender, to, index, amount);
+    //slither-disable-next-line unused-return    
+    return unifiedBondBank.requestEntryExists(borrower, collatralToken, borrowingToken, collatralAmount);
   }
 
-  function liquidateLoan(bytes32 uid, address borrowerAddress, address lenderContract, uint256 quota) public {
+  function cancelRequestEntry(address borrower, address collatralToken, address borrowingToken, uint256 collatralAmount) public {
+    require(msg.sender == address(requestManager), 'you are not authorized to do this action');
+    return unifiedBondBank.cancelRequestEntry(borrower, collatralToken, borrowingToken, collatralAmount);
+  }
+
+  function compelteBondEntry(
+    address borrower,
+    address lender,
+    uint32 borrowerId,
+    uint32 lenderId,
+    address collatralToken,
+    address borrowingToken,
+    uint256 collatralAmount,
+    uint256 borrowingAmount
+  ) public payable {
+    return unifiedBondBank.compelteBondEntry{value: msg.value}(
+      borrower, lender, borrowerId, lenderId, collatralToken, borrowingToken, collatralAmount, borrowingAmount
+    );
+  }
+
+  function liquidateLoan(bytes32 uid, address borrowerAddress, uint256 quota) public {
     require(msg.sender == address(bondContractsManager), 'you are not authorized to do this action');
-    bondBank.liquidateLoan(uid, borrowerAddress, lenderContract, quota);
+    unifiedBondBank.liquidateLoan(uid, borrowerAddress, lenderContract, quota);
   }
 
   function deposit(bytes32 uid, address sender, uint256 amount) public payable {
-    require(msg.sender == borrower, 'you are not authorized to do this action');
-    return bondBank.deposit{value: msg.value}(uid, sender, amount);
+    require(msg.sender == borrowerContract, 'you are not authorized to do this action');
+    return unifiedBondBank.deposit{value: msg.value}(uid, sender, amount);
   }
 
   function withdraw(bytes32 uid, address to, uint256 amount) public {
-    require(msg.sender == borrower, 'you are not authorized to do this action');
-    return bondBank.withdraw(uid, to, amount);
+    require(msg.sender == borrowerContract, 'you are not authorized to do this action');
+    return unifiedBondBank.withdraw(uid, to, amount);
   }
 
   function getWhitelistedTokens() public view returns (address[] memory) {
@@ -142,14 +147,26 @@ contract CommsRail {
     return requestManager.getRequiredAmountForRequest(request);
   }
 
+  function createBondRequest(
+    address collatralToken,
+    uint256 collatralAmount,
+    address borrowingToken,
+    uint32 borrowingPercentage,
+    uint32 termInHours,
+    uint32 intrestYearly
+  ) public payable {
+    if(msg.value > 0) {
+      unifiedBondBank.addRequestEntry{value: msg.value}(msg.sender, collatralToken, borrowingToken, collatralAmount);
+      requestManager.postBondRequest(msg.sender, collatralToken, msg.value, borrowingToken, borrowingPercentage, termInHours, intrestYearly);
+    } else {
+      unifiedBondBank.addRequestEntry{value: msg.value}(msg.sender, collatralToken, borrowingToken, collatralAmount);
+      requestManager.postBondRequest(msg.sender, collatralToken, collatralAmount, borrowingToken, borrowingPercentage, termInHours, intrestYearly);
+    }    
+  }
+
   function deleteBondRequest(uint256 index) public {
     require(msg.sender == address(bondContractsManager), 'you are not authorized to do this action');
     return requestManager.deleteBondRequest(index);
-  }
-
-  function spendFromBondContractsManager(bondRequest calldata request) public {
-    require(msg.sender == address(bondContractsManager), 'you are not authorized to do this action');
-    return requestManager.spendFromBondContractsManager(address(bondContractsManager), request);
   }
 
   function liquidate(uint32 borrowerId, uint32 lenderId, uint256 quota) public {

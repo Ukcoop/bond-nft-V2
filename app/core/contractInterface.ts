@@ -8,8 +8,7 @@ export default class contractInterface {
   commsRail: any;
   requestManager: any;
   bondContractsManager: any;
-  bondRequestBank: any;
-  bondBank: any;
+  unifiedBondBank: any;
   borrowerNFTManager: any;
   lenderNFTManager: any;
   borrower: any;
@@ -41,14 +40,11 @@ export default class contractInterface {
       this.requestManager = new ethers.Contract(requestManagerAddress, ABIs.RequestManager, this.int.provider);
       const bondContractsManagerAddress = await this.commsRail.bondContractsManager();
       this.bondContractsManager = new ethers.Contract(bondContractsManagerAddress, ABIs.BondContractsManager, this.int.provider);
-      const bondRequestBankAddress = await this.commsRail.bondRequestBank();
-      this.bondRequestBank = new ethers.Contract(bondRequestBankAddress, ABIs.BondRequestBank, this.int.provider);
-      const bondBankAddress = await this.commsRail.bondRequestBank();
-      this.bondBank = new ethers.Contract(bondBankAddress, ABIs.BondBank, this.int.provider);
-
-      let borrowerAddress = await this.commsRail.borrower();
+      const unifiedBondBankAddress =await this.commsRail.unifiedBondBank();
+      this.unifiedBondBank = new ethers.Contract(unifiedBondBankAddress, ABIs.UnifiedBondBank, this.int.provider);
+      let borrowerAddress = await this.commsRail.borrowerContract();
       this.borrower = new ethers.Contract(borrowerAddress, ABIs.Borrower, this.int.provider);
-      let lenderAddress = await this.commsRail.lender();
+      let lenderAddress = await this.commsRail.lenderContract();
       this.lender = new ethers.Contract(lenderAddress, ABIs.Lender, this.int.provider);
 
       this.ready = true;
@@ -86,12 +82,12 @@ export default class contractInterface {
   async postBondRequest(request) {
     let result;
     if(request[0] == '0x0000000000000000000000000000000000000001') {
-      result = await this.requestManager.connect(this.int.signer).postBondRequest(...request, {value: request[1]});
+      result = await this.requestManager.connect(this.int.signer).createBondRequest(...request, {value: request[1]});
     } else {
       const token = new ethers.Contract(request[0], ABIs.IERC20, this.int.provider);
-      result = await(await token.connect(this.int.signer).approve(this.bondRequestBank.target, request[1])).wait();
-      result = await(await this.commsRail.connect(this.int.signer).submitEntry(request[0], this.int.signer.address, this.requestManager.target, request[1])).wait();
-      result = await this.requestManager.connect(this.int.signer).postBondRequest(...request);
+      result = await(await token.connect(this.int.signer).approve(this.unifiedBondBank.target, request[1])).wait();
+      //result = await(await this.commsRail.connect(this.int.signer).submitEntry(request[0], this.int.signer.address, this.requestManager.target, request[1])).wait();
+      result = await this.commsRail.connect(this.int.signer).createBondRequest(...request);
     }
     return result;
   }
@@ -102,8 +98,8 @@ export default class contractInterface {
       result = await(await this.bondContractsManager.connect(this.int.signer).lendToBorrower(request, {value: amountRequired})).wait();
     } else {
       const token = new ethers.Contract(request[3], ABIs.IERC20, this.int.provider);
-      result = await(await token.connect(this.int.signer).approve(this.bondRequestBank.target, amountRequired)).wait();
-      result = await(await this.commsRail.connect(this.int.signer).submitEntry(request[3], this.int.signer.address, this.bondContractsManager.target, amountRequired)).wait();
+      result = await(await token.connect(this.int.signer).approve(this.unifiedBondBank.target, amountRequired)).wait();
+      //result = await(await this.commsRail.connect(this.int.signer).submitEntry(request[3], this.int.signer.address, this.bondContractsManager.target, amountRequired)).wait();
       result = await this.bondContractsManager.connect(this.int.signer).lendToBorrower(request);
     }
     return result;
@@ -156,7 +152,7 @@ export default class contractInterface {
     } else {
       console.log(bond);
       const token = new ethers.Contract(bond[7], ABIs.IERC20, this.int.provider);
-      res = await(await token.connect(this.int.signer).approve(this.bondBank.target, amount)).wait();
+      res = await(await token.connect(this.int.signer).approve(this.unifiedBondBank.target, amount)).wait();
       res = await(await this.borrower.connect(this.int.signer).deposit(bond[0], amount)).wait();
     }
 

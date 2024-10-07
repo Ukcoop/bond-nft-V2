@@ -25,7 +25,7 @@ contract BorrowerTest is Test, HandlesETH, ERC721Holder {
     bondContractsManagerTest.setUp();
     requestManagerTest = bondContractsManagerTest.requestManagerTest();
     commsRail = bondContractsManagerTest.commsRail();
-    borrower = Borrower(commsRail.borrower());
+    borrower = Borrower(commsRail.borrowerContract());
     tokenAddresses = commsRail.getWhitelistedTokens();
   }
 
@@ -74,12 +74,14 @@ contract BorrowerTest is Test, HandlesETH, ERC721Holder {
       }
     } else {
       IERC20 token = IERC20(data.borrowingToken);
-      token.approve(address(commsRail.bondBank()), data.borrowingAmount * depositAmount / 100);
+      token.approve(address(commsRail.unifiedBondBank()), data.borrowingAmount * depositAmount / 100);
       try borrower.deposit(0, data.borrowingAmount * depositAmount / 100) {
         require(!depositRevert, 'failed to revert');
       } catch {
         require(depositRevert, 'reverted unexpectidly');
       }
     }
+
+    return (withdrawRevert || depositRevert);    
   }
 }
