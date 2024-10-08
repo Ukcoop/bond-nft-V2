@@ -154,7 +154,7 @@ contract UnifiedBondBank is HandlesETH {
         if (amountNeeded != 0) {
           commsRail.swapETHforToken{value: entry.collatralAmount}(entry.borrowingToken, amountNeeded);
         }
-        amountUsed = amountUsed - address(this).balance;
+        amountUsed -= address(this).balance;
         IERC20 tokenContract = IERC20(entry.borrowingToken);
         bool status = tokenContract.transfer(lenderContract, quota);
         require(status, 'transfer failed');

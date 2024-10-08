@@ -141,7 +141,7 @@ contract BondQueries is Bond {
       (data.collatralToken == address(1) ? 0x82aF49447D8a07e3bd95BD0d56f35241523fBab1 : data.collatralToken),
       (data.borrowingToken == address(1) ? 0x82aF49447D8a07e3bd95BD0d56f35241523fBab1 : data.borrowingToken)
     );
-    return ((data.borrowed * 100) / (collatralValue * 100));
+    return ((data.borrowed * 100) / collatralValue);
   }
 
   function isUnderCollateralized(uint32 id) public view returns (bool) {
