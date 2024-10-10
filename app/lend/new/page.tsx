@@ -5,6 +5,7 @@ import { useSearchParams } from 'next/navigation';
 
 import Button from '@mui/material/Button';
 
+import config from '../../../constants/config.json';
 import toDecimalsMapping from '../../../constants/toDecimalsMapping.json';
 import toImageMapping from '../../../constants/toImageMapping.json';
 import { image } from 'token-icons';
@@ -56,7 +57,7 @@ function convertHours(hours) {
 }
 
 export default function NewBond() {
-  let contract = (process.env.PREFERRED_CONN_TYPE == true) ? new contractInterface(new testWalletnterface()) : new contractInterface(new browserWalletInterface());
+  let contract = (config.connType == 'test') ? new contractInterface(new testWalletnterface()) : new contractInterface(new browserWalletInterface());
 
   const searchParams = useSearchParams();
   const bondRequest = atob(searchParams.get('bondRequest')).split(",");

@@ -6,12 +6,14 @@ import NavBar from '../components/navbar';
 import BondRequest from '../components/bondRequest';
 import Status from '../components/status';
 
+import config from '../../constants/config.json';
+
 import browserWalletInterface from '../core/browserWalletInterface';
 import testWalletnterface from '../core/testWalletInterface';
 import contractInterface from '../core/contractInterface';
 
 export default function Lend() {
-  let contract = (process.env.PREFERRED_CONN_TYPE == true) ? new contractInterface(new testWalletnterface()) : new contractInterface(new browserWalletInterface());
+  let contract = (config.connType == 'test') ? new contractInterface(new testWalletnterface()) : new contractInterface(new browserWalletInterface());
 
   const [requests, setRequests] = useState([]);
   const [status, setStatus] = useState({code: 'loading', data: ''});

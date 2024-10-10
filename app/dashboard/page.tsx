@@ -7,12 +7,14 @@ import Bond from '../components/bond.tsx';
 import Status from '../components/status';
 import BondRequest from '../components/bondRequest';
 
+import config from '../../constants/config.json';
+
 import browserWalletInterface from '../core/browserWalletInterface';
 import testWalletnterface from '../core/testWalletInterface';
 import contractInterface from '../core/contractInterface'
 
 export default function Dashboard() {
-  let contract = (process.env.PREFERRED_CONN_TYPE == true) ? new contractInterface(new testWalletnterface()) : new contractInterface(new browserWalletInterface());
+  let contract = (config.connType == 'test') ? new contractInterface(new testWalletnterface()) : new contractInterface(new browserWalletInterface());
 
   const [ids, setIds] = useState([[],[]]);
   const [requests, setRequests] = useState([]);
