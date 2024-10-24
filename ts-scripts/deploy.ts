@@ -33,22 +33,22 @@ async function deploy() {
   const nftAddresses = await bondContractsManager.getNFTAddresses();
   const bondAddresses = await bondContractsManager.getBondAddresses();
 
-  await commsRail.addAddress((unifiedBondBank.target), 'UnifiedBondBank');
   await commsRail.addAddress((requestManager.target), 'RequestManager');
-  await commsRail.addAddress((bondContractsManager.target), 'BondContractsManager');
-  await commsRail.addAddress(nftAddresses[0], 'BorrowerNFTManager');
-  await commsRail.addAddress(nftAddresses[1], 'LenderNFTManager');
-  await commsRail.addAddress(bondAddresses[0], 'Borrower');
-  await addAbi('borrowerNFT.sol', 'Borrower');
-  await commsRail.addAddress(bondAddresses[1], 'Lender');
-  await addAbi('lenderNFT.sol', 'Lender');
-  await commsRail.addAddress((automationManager.target), 'AutomationManager');
+  commsRail.addAddress((unifiedBondBank.target), 'UnifiedBondBank');
+  commsRail.addAddress((bondContractsManager.target), 'BondContractsManager');
+  commsRail.addAddress(nftAddresses[0], 'BorrowerNFTManager');
+  commsRail.addAddress(nftAddresses[1], 'LenderNFTManager');
+  commsRail.addAddress(bondAddresses[0], 'Borrower');
+  addAbi('borrowerNFT.sol', 'Borrower');
+  commsRail.addAddress(bondAddresses[1], 'Lender');
+  addAbi('lenderNFT.sol', 'Lender');
+  commsRail.addAddress((automationManager.target), 'AutomationManager');
 
-  await addAbi('IERC20.sol', 'IERC20');
+  addAbi('IERC20.sol', 'IERC20');
 
   const tokens = await commsRail.getWhitelistedTokens();
   for(let i = 1; i < tokens.length - 1; i++) {
-    await commsRail.swapETHforToken(tokens[i], 0, {value: BigInt(10 ** 18)});
+    commsRail.swapETHforToken(tokens[i], 0, {value: BigInt(10 ** 18)});
   }
 
   console.log(`Contract deployed to address: ${commsRail.target}`);

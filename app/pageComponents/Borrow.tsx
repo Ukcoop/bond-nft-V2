@@ -2,23 +2,16 @@
 
 import { useEffect, useState } from 'react';
 
-import config from '../../constants/config.json';
 import toDecimalsMapping from '../../constants/toDecimalsMapping.json';
 import toImageMapping from '../../constants/toImageMapping.json';
-
-import InputField from '../components/inputField';
 import { image } from 'token-icons';
 
-import NavBar from '../components/navbar';
 import DropDownMenu from '../components/dropdownMenu';
-import Status from '../components/status';
-
-import browserWalletInterface from '../core/browserWalletInterface';
-import testWalletnterface from '../core/testWalletInterface';
-import contractInterface from '../core/contractInterface';
+import InputField from '../components/inputField';
 
 import Slider from '@mui/material/Slider';
-import Button from '@mui/material/Button';
+import Button from '../components/button';
+import Status from '../components/status';
 
 function formatTokenAmount(amount, decimals) {
   if(amount == 0) return 0; 
@@ -34,10 +27,7 @@ function formatTokenAmount(amount, decimals) {
   return formattedAmount;
 }
 
-export default function Borrow() {
-  let contract = (config.connType == 'test') ? new contractInterface(new testWalletnterface()) : new contractInterface(new browserWalletInterface());
-  //let contract =  new contractInterface(new testWalletnterface());
-
+export default function Borrow({ contract, setIndex }) {
   const [status, setStatus] = useState({code: 'loading', data: ''});
   const [coinOptions, setCoinOptions] = useState([]);
   const [collatralToken, setCollatralToken] = useState({key: 'null', component: (<div className="mx-2">nothing selected</div>)});
@@ -46,10 +36,6 @@ export default function Borrow() {
   const [collatraliztionRate, setCollatralizationRate] = useState(80);
   const [durationInHours, setDurationInHours] = useState(24);
   const [intrestYearly, setIntrestYearly] = useState(5);
-
-  const reset = async() => {
-    window.location.replace('/borrow');
-  }
 
   const getCoins = async() => {
     let tokens = Object.keys(toDecimalsMapping);
@@ -77,6 +63,10 @@ export default function Borrow() {
         setStatus({code: 'error', data: processedError});
       } 
     }
+  }
+
+  const reset = () => {
+    setIndex(3);
   }
 
   useEffect(() => {
@@ -129,6 +119,7 @@ export default function Borrow() {
     }
   };
 
+
   const ensureInt = (event: any) => {
     if (!(event.charCode !=8 && event.charCode ==0 || (event.charCode >= 48 && event.charCode <= 57))) {
       event.preventDefault();
@@ -136,50 +127,37 @@ export default function Borrow() {
   }
 
   return (
-    <div className="h-screen flex flex-col">
-      <NavBar />
-        <main className="flex-grow flex flex-col w-screen p-5 bg-slate-100 dark:bg-slate-900 overflow-hidden">
-          <h1 className="text-3xl dark:text-white mb-2">borrow</h1>
-          <div className="h-0 border border-sky-500"></div>
-          <div className="flex-grow flex items-center justify-center overflow-auto min-h-max">
-            <div className="flex items-stretch h-96 min-w-max m-0 border-transparent rounded-md bg-white dark:bg-gray-700 shadow-xl">
-              <div className="flex flex-col w-1/2 h-full border-2 border-transparent border-r-sky-500">
-                <div className="flex flex-col items-center w-full">
-                  <div className="flex flex-col w-5/6">
-                    <h1 className="text-2xl dark:text-white my-2">collatral</h1>
-                    <div className="h-0 mb-2 border-2 border-transparent border-t-sky-500"></div>
-                    <DropDownMenu options={coinOptions} select={setCollatralToken} selected={collatralToken} />
-                    <h1 className="text-md dark:text-white">amount</h1>
-                    <InputField type="number" value={collatralAmount} setValue={setCollatralAmount} />
-                    <h1 className="text-2xl dark:text-white mb-2">borrowing</h1>
-                    <div className="h-0 mb-2 border-2 border-transparent border-t-sky-500"></div>
-                    <DropDownMenu options={coinOptions} select={setBorrowingToken} selected={borrowingToken} />
-                    <h1 className="text-md dark:text-white">collatraliztion rate</h1>
-                    <Slider className="text-sky-500" onChange={(e) => { setCollatralizationRate(e.target.value) }} defaultValue={collatraliztionRate} min={20} max={80} aria-label="Small" valueLabelDisplay="auto" />
-                  </div>
-                </div>
-              </div>
-              <div className="flex flex-col w-1/2 h-full">
-                <div className="flex flex-col items-center justify-center w-full h-full">
-                  <div className="flex flex-col justify-between w-5/6 h-full pb-5">
-                    <div>
-                      <h1 className="text-2xl dark:text-white my-2">paramiters</h1>
-                      <div className="h-0 mb-5 border-2 border-transparent border-b-sky-500"></div>
-                      <h1 className="text-md dark:text-white">duration in hours</h1>
-                      <InputField type="number" value={durationInHours} setValue={setDurationInHours} onKeyPress={ensureInt} min="24" />
-                      <h1 className="text-md dark:text-white">intrest rate</h1>
-                      <Slider className="text-sky-500" value={intrestYearly} onChange={(e) => { setIntrestYearly(e.target.value) }} defaultValue={intrestYearly} min={2} max={15} aria-label="Small" valueLabelDisplay="auto" />
-                    </div>
-                    <div className="w-full">
-                      {(status.code !== 'ok') && <Status status={status} />}
-                      <Button variant="contained" onClick={onClick} className="w-full bg-sky-500 hover:bg-sky-400 rounded-md text-white">borrow</Button>
-                    </div>
-                  </div>
-                </div>
-              </div>
+    <div className="flex flex-col flex-grow h-screen p-5 bg-gray-100 dark:bg-gray-800 overflow-hidden">
+      <h1 className="text-3xl dark:text-white pb-2 min-h-10">borrow</h1>
+        <div className="h-0 border border-sky-500"></div>
+        <div className="flex flex-row w-max overflow-wrap">
+          <div className="flex flex-col w-max p-2 mr-2">
+            <h1 className="text-2xl dark:text-white my-2">collatral</h1>
+            <div className="h-0 mb-2 border-2 border-transparent border-t-sky-500"></div>
+            <DropDownMenu options={coinOptions} select={setCollatralToken} selected={collatralToken} />
+            <h1 className="text-md dark:text-white">amount</h1>
+            <InputField type="number" value={collatralAmount} setValue={setCollatralAmount} />
+            <h1 className="text-2xl dark:text-white mb-2">borrowing</h1>
+            <div className="h-0 mb-2 border-2 border-transparent border-t-sky-500"></div>
+            <DropDownMenu options={coinOptions} select={setBorrowingToken} selected={borrowingToken} />
+            <h1 className="text-md dark:text-white">collatraliztion rate</h1>
+            <Slider className="text-sky-500" onChange={(e) => { setCollatralizationRate(e.target.value) }} defaultValue={collatraliztionRate} min={20} max={80} aria-label="Small" valueLabelDisplay="auto" />
+          </div>
+          <div className="flex flex-col justify-between w-max p-2">
+            <div>
+              <h1 className="text-2xl dark:text-white my-2">paramiters</h1>
+              <div className="h-0 mb-5 border-2 border-transparent border-t-sky-500"></div>
+              <h1 className="text-md dark:text-white">duration in hours</h1>
+              <InputField type="number" value={durationInHours} setValue={setDurationInHours} onKeyPress={ensureInt} min="24" />
+              <h1 className="text-md dark:text-white">intrest rate</h1>
+              <Slider className="text-sky-500" value={intrestYearly} onChange={(e) => { setIntrestYearly(e.target.value) }} defaultValue={intrestYearly} min={2} max={15} aria-label="Small" valueLabelDisplay="auto" />
+            </div>
+            <div className="w-full">
+              {(status.code !== 'ok') && <Status status={status} />}
+              <Button text="Borrow" style="primary" onClick={onClick}/>
             </div>
           </div>
-        </main>
+        </div>
       </div>
   );
 }

@@ -5,7 +5,7 @@ export default class testWalletInterface {
   provider: any;
 
   async setup() {
-    this.provider = new ethers.JsonRpcProvider();
+    this.provider = new ethers.JsonRpcProvider(window.location.protocol + "//" + window.location.host + '/api/proxy');
   }
 
   async ensureSignerAvailable() {

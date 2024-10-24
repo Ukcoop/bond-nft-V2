@@ -24,7 +24,7 @@ export default class metamaskInterface {
   }
 
   async ensureLocalNodeNetwork() {
-    const localNodeUrl = 'http://127.0.0.1:8545';
+    const localNodeUrl = window.location.protocol + "//" + window.location.host + '/api/proxy';
     const localNodeChainId = '0x7A69'; // 31137 in hexadecimal
     
     const localNodeParams = {

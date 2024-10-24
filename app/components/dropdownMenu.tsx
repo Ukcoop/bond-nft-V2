@@ -6,7 +6,7 @@ export default function DropdownMenu({ options, select, selected }) {
   const [isVisable, setIsVisable] = useState(false);
   let styleClass = 'w-full h-10 dark:text-white shadow-xl border border-transparent';
   let selectedColor = ' bg-sky-200 dark:bg-gray-600';
-  let notSelectedColor = ' bg-sky-100 dark:bg-gray-800';
+  let notSelectedColor = ' bg-sky-100 dark:bg-slate-900';
   let defaultClass = ' rounded-md';
   let notEnd = ' border-b-sky-500';
   let start  = ' border-b-sky-500 rounded-t-md';
