@@ -96,7 +96,7 @@ contract CommsRail {
     returns (bool, uint256)
   {
     require(msg.sender == address(requestManager) || msg.sender == address(bondContractsManager), 'you are not authorized to do this action');
-    //slither-disable-next-line unused-return    
+    //slither-disable-next-line unused-return
     return unifiedBondBank.requestEntryExists(borrower, collatralToken, borrowingToken, collatralAmount);
   }
 
@@ -155,13 +155,13 @@ contract CommsRail {
     uint32 termInHours,
     uint32 intrestYearly
   ) public payable {
-    if(msg.value > 0) {
+    if (msg.value > 0) {
       unifiedBondBank.addRequestEntry{value: msg.value}(msg.sender, collatralToken, borrowingToken, collatralAmount);
       requestManager.postBondRequest(msg.sender, collatralToken, msg.value, borrowingToken, borrowingPercentage, termInHours, intrestYearly);
     } else {
       unifiedBondBank.addRequestEntry{value: msg.value}(msg.sender, collatralToken, borrowingToken, collatralAmount);
       requestManager.postBondRequest(msg.sender, collatralToken, collatralAmount, borrowingToken, borrowingPercentage, termInHours, intrestYearly);
-    }    
+    }
   }
 
   function deleteBondRequest(uint256 index) public {

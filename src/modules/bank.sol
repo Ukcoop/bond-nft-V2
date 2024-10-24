@@ -110,7 +110,7 @@ contract UnifiedBondBank is HandlesETH {
     uint256 borrowingAmount
   ) public payable {
     require(msg.sender == address(commsRail), 'you are not authorized to do this action');
-    if(borrowingToken == address(1)) require(msg.value >= borrowingAmount, 'not enough ETH was sent');
+    if (borrowingToken == address(1)) require(msg.value >= borrowingAmount, 'not enough ETH was sent');
 
     (bool passed, uint256 index) = requestEntryExists(borrower, collatralToken, borrowingToken, collatralAmount);
     require(passed, 'this entry was not found');

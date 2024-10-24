@@ -82,6 +82,6 @@ contract BorrowerTest is Test, HandlesETH, ERC721Holder {
       }
     }
 
-    return (withdrawRevert || depositRevert);    
+    return (withdrawRevert || depositRevert);
   }
 }
