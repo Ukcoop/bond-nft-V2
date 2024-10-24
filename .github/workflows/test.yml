@@ -25,10 +25,6 @@ jobs:
         with:
           node-version: '20.16.0'
 
-      - name: Install dependencies
-        run: |
-          npm install && forge install
-
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
         with:
@@ -37,6 +33,10 @@ jobs:
       - name: Show Forge version
         run: |
           forge --version
+
+      - name: Install dependencies
+        run: |
+          npm install && forge install
 
       - name: Run Forge fmt
         run: |
