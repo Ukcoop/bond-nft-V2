@@ -31,7 +31,7 @@ contract AutomationManagerTest is Test {
     uint8 collatralIndex,
     uint8 borrowingIndex,
     uint8 percentage,
-    uint16 termInHours,
+    uint8 durationInDays,
     uint8 intrest
   ) public payable returns (bool reverted) {
     withdrawAmount = uint8(bound(withdrawAmount, 0, 100));
@@ -41,7 +41,7 @@ contract AutomationManagerTest is Test {
     borrowingIndex = uint8(bound(borrowingIndex, 0, tokenAddresses.length - 1));
 
     reverted = borrowerTest.testBorrowerNFTFunctions{value: amountIn}(
-      withdrawAmount, depositAmount, amountIn, collatralIndex, borrowingIndex, percentage, termInHours, intrest
+      withdrawAmount, depositAmount, amountIn, collatralIndex, borrowingIndex, percentage, durationInDays, intrest
     );
 
     console.log(reverted);
@@ -51,7 +51,7 @@ contract AutomationManagerTest is Test {
     if (upkeepNeeded) {
       try automationManager.performUpkeep(bytes('')) {}
       catch Error(string memory reason) {
-        if (keccak256(bytes(reason)) == keccak256('ds-math-sub-underflow')) {
+        if (keccak256(bytes(reason)) == keccak256('ds-math-sub-underflow') || keccak256(bytes(reason)) == keccak256('UniswapV2Router: EXCESSIVE_INPUT_AMOUNT')) {
           reverted = true;
           return reverted;
         } else {

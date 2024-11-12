@@ -64,7 +64,7 @@ contract RequestManager is HandlesETH {
       bool isMatching = (
         (_bondRequests[i].borrower == request.borrower) && (_bondRequests[i].collatralToken == request.collatralToken)
           && (_bondRequests[i].collatralAmount == request.collatralAmount) && (_bondRequests[i].borrowingToken == request.borrowingToken)
-          && (_bondRequests[i].durationInHours == request.durationInHours) && (_bondRequests[i].intrestYearly == request.intrestYearly)
+          && (_bondRequests[i].durationInDays == request.durationInDays) && (_bondRequests[i].intrestYearly == request.intrestYearly)
       );
       if (isMatching) {
         return int256(i);
@@ -90,17 +90,17 @@ contract RequestManager is HandlesETH {
     uint256 collatralAmount,
     address borrowingToken,
     uint32 borrowingPercentage,
-    uint32 termInHours,
+    uint32 durationInDays,
     uint32 intrestYearly
   ) public {
     require(collatralAmount != 0, 'cant post a bond with no collatral');
     if (collatralToken != address(1)) require(isWhitelistedToken(collatralToken), 'this token is not whitelisted');
     if (borrowingToken != address(1)) require(isWhitelistedToken(borrowingToken), 'this token is not whitelisted');
     require(borrowingPercentage <= 80 && borrowingPercentage >= 20, 'borrowingPercentage is not in range: (20 to 80)%');
-    require(termInHours >= 24, 'bond length is too short');
+    require(durationInDays >= 1 && durationInDays <= 365, 'bond duration is not in range: (1 to 365 days)');
     require(intrestYearly >= 2 && intrestYearly <= 15, 'intrest is not in this range: (2 to 15)%');
 
-    bondRequests.push(bondRequest(borrower, collatralToken, collatralAmount, borrowingToken, borrowingPercentage, termInHours, intrestYearly));
+    bondRequests.push(bondRequest(borrower, collatralToken, collatralAmount, borrowingToken, borrowingPercentage, durationInDays, intrestYearly));
 
     // slither-disable-next-line unused-return
     (bool passed,) = commsRail.requestEntryExists(borrower, collatralToken, borrowingToken, collatralAmount);

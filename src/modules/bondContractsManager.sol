@@ -51,7 +51,7 @@ contract BondContractsManager is HandlesETH, ReentrancyGuard {
     bondContractsData[bondId] = bondData(
       borrowerId,
       lenderId,
-      request.durationInHours,
+      request.durationInDays,
       request.intrestYearly,
       uint32(block.timestamp),
       address(this),

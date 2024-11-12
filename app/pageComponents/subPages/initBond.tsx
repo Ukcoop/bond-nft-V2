@@ -6,47 +6,10 @@ import toDecimalsMapping from '../../../constants/toDecimalsMapping.json';
 import toImageMapping from '../../../constants/toImageMapping.json';
 import { image } from 'token-icons';
 
+import { formatTokenAmount, parseDays } from '../../core/shared.ts';
+
 import Status from '../../components/status';
 import Button from '../../components/button';
-
-function formatTokenAmount(amount, decimals) {
-  if(amount == 0) return 0; 
-  let tokenAmount = (amount / Math.pow(10, decimals));
-  let maxDecimals = 8 - Math.floor(Math.log10(tokenAmount));
-  maxDecimals = Math.max(0, maxDecimals);
-  let formattedAmount = tokenAmount.toFixed(maxDecimals);
-  formattedAmount = formattedAmount.replace(/\.?0+$/, '');
-  if (formattedAmount.length > 10) {
-    formattedAmount = tokenAmount.toExponential(3).replace(/\.?0+e/, 'e');
-  }
-
-  return formattedAmount;
-}
-
-function convertHours(hours) {
-  const units = [
-    { label: 'year', hours: 24 * 365 },
-    { label: 'month', hours: 24 * 30 },
-    { label: 'week', hours: 24 * 7 },
-    { label: 'day', hours: 24 }
-  ];
-
-  let result = [];
-
-  for (let { label, hours: unitHours } of units) {
-    if (hours >= unitHours) {
-      let value = Math.floor(hours / unitHours);
-      hours %= unitHours;
-      result.push(`${value} ${label}${value > 1 ? 's' : ''}`);
-    }
-  }
-
-  if (hours > 0) {
-    result.push(`${Math.floor(hours)} hour${hours > 1 ? 's' : ''}`);
-  }
-
-  return result.join(', ');
-}
 
 export default function InitBond({ contract, reset, request }) {
   const [borrowingAmount, setBorrowingAmount] = useState(0);
@@ -111,7 +74,7 @@ export default function InitBond({ contract, reset, request }) {
         <div className="h-0 mb-2 border-2 border-transparent border-t-sky-500"></div>
         <h1 className="text-md dark:text-white mb-2">duration</h1> 
         <div className="flex items-center mb-2">
-          <a className="text-xl dark:text-white">{convertHours(parseInt(request[5]))}</a>
+          <a className="text-xl dark:text-white">{parseDays(parseInt(request[5]))}</a>
         </div>
         <div className="h-0 mb-2 border-2 border-transparent border-t-sky-500"></div>
         <h1 className="text-md dark:text-white mb-2">intrest</h1> 

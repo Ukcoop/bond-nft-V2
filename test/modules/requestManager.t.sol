@@ -44,25 +44,25 @@ contract RequestManagerTest is Test, ERC721Holder {
     nft.safeTransferFrom(address(this), to, 0);
   }
 
-  function testPostingABondRequest(uint64 amountIn, uint8 collatralIndex, uint8 borrowingIndex, uint8 percentage, uint16 termInHours, uint8 intrest)
+  function testPostingABondRequest(uint64 amountIn, uint8 collatralIndex, uint8 borrowingIndex, uint8 percentage, uint8 durationInDays, uint8 intrest)
     public
     payable
     returns (bool)
   {
     amountIn = uint64(bound(amountIn, 10 ** 16, 10 ** 20));
+    durationInDays = uint8(bound(durationInDays, 1 ,365));
     collatralIndex = uint8(bound(collatralIndex, 0, tokenAddresses.length - 1));
     borrowingIndex = uint8(bound(borrowingIndex, 0, tokenAddresses.length - 1));
 
     bool expectRevert = false;
     if (percentage > 80 || percentage < 20) expectRevert = true;
-    if (termInHours < 24) expectRevert = true;
     if (intrest > 15 || intrest < 2) expectRevert = true;
 
     address collatral = tokenAddresses[collatralIndex];
     address borrowing = tokenAddresses[borrowingIndex];
 
     if (collatral == address(1)) {
-      try commsRail.createBondRequest{value: amountIn}(collatral, amountIn, borrowing, percentage, termInHours, intrest) {
+      try commsRail.createBondRequest{value: amountIn}(collatral, amountIn, borrowing, percentage, durationInDays, intrest) {
         require(!expectRevert, 'failed to revert');
       } catch {
         require(expectRevert, 'reverted unexpectidly');
@@ -75,7 +75,7 @@ contract RequestManagerTest is Test, ERC721Holder {
       IERC20 token = IERC20(collatral);
       uint256 amount = token.balanceOf(address(this));
       token.approve(unifiedBondBank, amount);
-      try commsRail.createBondRequest(collatral, amount, borrowing, percentage, termInHours, intrest) {
+      try commsRail.createBondRequest(collatral, amount, borrowing, percentage, durationInDays, intrest) {
         require(!expectRevert, 'failed to revert');
       } catch {
         require(expectRevert, 'reverted unexpectidly');

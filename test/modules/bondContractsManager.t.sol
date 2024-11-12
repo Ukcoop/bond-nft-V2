@@ -46,7 +46,7 @@ contract BondContractsManagerTest is Test, HandlesETH, ERC721Holder {
     nft.safeTransferFrom(address(this), msg.sender, 0);
   }
 
-  function testSupplyingABondRequest(uint64 amountIn, uint8 collatralIndex, uint8 borrowingIndex, uint8 percentage, uint16 termInHours, uint8 intrest)
+  function testSupplyingABondRequest(uint64 amountIn, uint8 collatralIndex, uint8 borrowingIndex, uint8 percentage, uint8 durationInDays, uint8 intrest)
     public
     payable
     returns (bool reverted)
@@ -56,7 +56,7 @@ contract BondContractsManagerTest is Test, HandlesETH, ERC721Holder {
     borrowingIndex = uint8(bound(borrowingIndex, 0, tokenAddresses.length - 1));
 
     reverted =
-      requestManagerTest.testPostingABondRequest{value: amountIn / 2}(amountIn / 2, collatralIndex, borrowingIndex, percentage, termInHours, intrest);
+      requestManagerTest.testPostingABondRequest{value: amountIn / 2}(amountIn / 2, collatralIndex, borrowingIndex, percentage, durationInDays, intrest);
     if (reverted) return reverted;
 
     bondRequest memory request = requestManager.getBondRequests()[0];

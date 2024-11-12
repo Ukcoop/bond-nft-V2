@@ -82,7 +82,7 @@ export default class contractInterface {
   async postBondRequest(request) {
     let result;
     if(request[0] == '0x0000000000000000000000000000000000000001') {
-      result = await this.requestManager.connect(this.int.signer).createBondRequest(...request, {value: request[1]});
+      result = await this.commsRail.connect(this.int.signer).createBondRequest(...request, {value: request[1]});
     } else {
       const token = new ethers.Contract(request[0], ABIs.IERC20, this.int.provider);
       result = await(await token.connect(this.int.signer).approve(this.unifiedBondBank.target, request[1])).wait();

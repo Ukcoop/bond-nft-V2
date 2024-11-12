@@ -40,7 +40,7 @@ contract BorrowerTest is Test, HandlesETH, ERC721Holder {
     uint8 collatralIndex,
     uint8 borrowingIndex,
     uint8 percentage,
-    uint16 termInHours,
+    uint8 durationInDays,
     uint8 intrest
   ) public payable returns (bool reverted) {
     withdrawAmount = uint8(bound(withdrawAmount, 0, 100));
@@ -50,7 +50,7 @@ contract BorrowerTest is Test, HandlesETH, ERC721Holder {
     borrowingIndex = uint8(bound(borrowingIndex, 0, tokenAddresses.length - 1));
 
     reverted =
-      bondContractsManagerTest.testSupplyingABondRequest{value: amountIn}(amountIn, collatralIndex, borrowingIndex, percentage, termInHours, intrest);
+      bondContractsManagerTest.testSupplyingABondRequest{value: amountIn}(amountIn, collatralIndex, borrowingIndex, percentage, durationInDays, intrest);
     if (reverted) return reverted;
 
     bondContractsManagerTest.sendBorrowerNFTToTestContract();

@@ -6,48 +6,11 @@ import Button from '../../components/button';
 import InputField from '../../components/inputField';
 import Status from '../../components/status';
 
+import { formatTokenAmount, parseDays } from '../../core/shared.ts';
+
 import toDecimalsMapping from '../../../constants/toDecimalsMapping.json';
 import toImageMapping from '../../../constants/toImageMapping.json';
 import { image } from 'token-icons';
-
-function formatTokenAmount(amount, decimals) {
-  if(amount == 0) return 0; 
-  let tokenAmount = (amount / Math.pow(10, decimals));
-  let maxDecimals = 8 - Math.floor(Math.log10(tokenAmount));
-  maxDecimals = Math.max(0, maxDecimals);
-  let formattedAmount = tokenAmount.toFixed(maxDecimals);
-  formattedAmount = formattedAmount.replace(/\.?0+$/, '');
-  if (formattedAmount.length > 10) {
-    formattedAmount = tokenAmount.toExponential(3).replace(/\.?0+e/, 'e');
-  }
-
-  return formattedAmount;
-}
-
-function convertHours(hours) {
-  const units = [
-    { label: 'year', hours: 24 * 365 },
-    { label: 'month', hours: 24 * 30 },
-    { label: 'week', hours: 24 * 7 },
-    { label: 'day', hours: 24 }
-  ];
-
-  let result = [];
-
-  for (let { label, hours: unitHours } of units) {
-    if (hours >= unitHours) {
-      let value = Math.floor(hours / unitHours);
-      hours %= unitHours;
-      result.push(`${value} ${label}${value > 1 ? 's' : ''}`);
-    }
-  }
-
-  if (hours > 0) {
-    result.push(`${Math.floor(hours)} hour${hours > 1 ? 's' : ''}`);
-  }
-
-  return result.join(', ');
-}
 
 export default function BondPage({ reset, contract, type, id }) {
   const [data, setData] = useState([]);
@@ -110,7 +73,7 @@ export default function BondPage({ reset, contract, type, id }) {
     }
   }
 
-  let timeLeft = ((parseInt(data[4]) + (parseInt(data[2]) * 3600)) - (Date.now() / 1000)) / 3600;
+  let timeLeft = ((parseInt(data[4]) + (parseInt(data[2]) * 3600)) - (Date.now() / 1000)) / 3600 / 24;
 
   return (
     <div className="flex flex-col flex-grow h-screen p-5 bg-gray-100 dark:bg-gray-800 overflow-hidden">
@@ -136,7 +99,7 @@ export default function BondPage({ reset, contract, type, id }) {
                   <div className="h-0 mb-2 border-2 border-transparent border-t-sky-500"></div>
                   <h1 className="text-md dark:text-white mb-2">time left</h1> 
                   <div className="flex items-center mb-2">
-                    <a className="text-xl dark:text-white">{convertHours(timeLeft)}</a>
+                    <a className="text-xl dark:text-white">{parseDays(timeLeft)}</a>
                   </div>
                   <div className="h-0 mb-2 border-2 border-transparent border-t-sky-500"></div>
                   <h1 className="text-md dark:text-white mb-2">intrest</h1> 

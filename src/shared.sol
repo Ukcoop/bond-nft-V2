@@ -9,7 +9,7 @@ struct bondRequest {
   uint256 collatralAmount;
   address borrowingToken;
   uint32 borrowingPercentage;
-  uint32 durationInHours;
+  uint32 durationInDays;
   uint32 intrestYearly;
 }
 
@@ -26,7 +26,7 @@ struct balancePair {
 struct bondData {
   uint32 borrowerId;
   uint32 lenderId;
-  uint32 durationInHours;
+  uint32 durationInDays;
   uint32 interestYearly;
   uint32 startTime;
   address owner;
@@ -109,7 +109,6 @@ contract BondQueries is Bond {
   // slither-disable-start timestamp
   // slither-disable-start divide-before-multiply
   // slither-disable-start assembly
-
   function getOwed(uint32 id) public view returns (uint256 owed) {
     bondData memory data = getBondData(id);
     uint256 start = data.startTime;
@@ -130,7 +129,7 @@ contract BondQueries is Bond {
 
   function hasMatured(uint32 id) public view returns (bool) {
     bondData memory data = getBondData(id);
-    return ((block.timestamp - data.startTime) / 3600) >= data.durationInHours;
+    return ((block.timestamp - data.startTime) / 3600 / 24) >= data.durationInDays;
   }
   // slither-disable-end timestamp
 

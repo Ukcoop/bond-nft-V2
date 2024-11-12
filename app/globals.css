@@ -1,3 +1,11 @@
+/*
+@import url('https://cdn.jsdelivr.net/gh/JetBrains/JetBrainsMono/web/woff2/JetBrainsMono-Regular.woff2');
+@import url('https://cdn.jsdelivr.net/gh/JetBrains/JetBrainsMono/web/woff/JetBrainsMono-Regular.woff');
+@import url('https://cdn.jsdelivr.net/gh/JetBrains/JetBrainsMono/ttf/JetBrainsMono-Regular.ttf');
+*/
+
+@import url('https://fonts.cdnfonts.com/css/jetbrains-mono');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -9,10 +17,6 @@
     margin: 0;
   }
 }
-
-@import url('https://cdn.jsdelivr.net/gh/JetBrains/JetBrainsMono/web/woff2/JetBrainsMono-Regular.woff2') format('woff2'),
-       url('https://cdn.jsdelivr.net/gh/JetBrains/JetBrainsMono/web/woff/JetBrainsMono-Regular.woff') format('woff'),
-       url('https://cdn.jsdelivr.net/gh/JetBrains/JetBrainsMono/ttf/JetBrainsMono-Regular.ttf') format('truetype');
 
 * {
   font-family: JetBrains Mono;

@@ -152,15 +152,15 @@ contract CommsRail {
     uint256 collatralAmount,
     address borrowingToken,
     uint32 borrowingPercentage,
-    uint32 termInHours,
+    uint32 durationInDays,
     uint32 intrestYearly
   ) public payable {
     if (msg.value > 0) {
       unifiedBondBank.addRequestEntry{value: msg.value}(msg.sender, collatralToken, borrowingToken, collatralAmount);
-      requestManager.postBondRequest(msg.sender, collatralToken, msg.value, borrowingToken, borrowingPercentage, termInHours, intrestYearly);
+      requestManager.postBondRequest(msg.sender, collatralToken, msg.value, borrowingToken, borrowingPercentage, durationInDays, intrestYearly);
     } else {
       unifiedBondBank.addRequestEntry{value: msg.value}(msg.sender, collatralToken, borrowingToken, collatralAmount);
-      requestManager.postBondRequest(msg.sender, collatralToken, collatralAmount, borrowingToken, borrowingPercentage, termInHours, intrestYearly);
+      requestManager.postBondRequest(msg.sender, collatralToken, collatralAmount, borrowingToken, borrowingPercentage, durationInDays, intrestYearly);
     }
   }
 

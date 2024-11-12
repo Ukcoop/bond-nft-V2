@@ -6,6 +6,8 @@ import toDecimalsMapping from '../../constants/toDecimalsMapping.json';
 import toImageMapping from '../../constants/toImageMapping.json';
 import { image } from 'token-icons';
 
+import { formatTokenAmount } from '../core/shared.ts';
+
 import DropDownMenu from '../components/dropdownMenu';
 import InputField from '../components/inputField';
 
@@ -13,19 +15,7 @@ import Slider from '@mui/material/Slider';
 import Button from '../components/button';
 import Status from '../components/status';
 
-function formatTokenAmount(amount, decimals) {
-  if(amount == 0) return 0; 
-  let tokenAmount = (amount / Math.pow(10, decimals));
-  let maxDecimals = 8 - Math.floor(Math.log10(tokenAmount));
-  maxDecimals = Math.max(0, maxDecimals);
-  let formattedAmount = tokenAmount.toFixed(maxDecimals);
-  formattedAmount = formattedAmount.replace(/\.?0+$/, '');
-  if (formattedAmount.length > 10) {
-    formattedAmount = tokenAmount.toExponential(3).replace(/\.?0+e/, 'e');
-  }
 
-  return formattedAmount;
-}
 
 export default function Borrow({ contract, setIndex }) {
   const [status, setStatus] = useState({code: 'loading', data: ''});
@@ -34,7 +24,7 @@ export default function Borrow({ contract, setIndex }) {
   const [collatralAmount, setCollatralAmount] = useState(0);
   const [borrowingToken , setBorrowingToken] = useState({key: 'null', component: (<div className="mx-2">nothing selected</div>)});
   const [collatraliztionRate, setCollatralizationRate] = useState(80);
-  const [durationInHours, setDurationInHours] = useState(24);
+  const [durationInDays, setDurationInDays] = useState(1);
   const [intrestYearly, setIntrestYearly] = useState(5);
 
   const getCoins = async() => {
@@ -98,14 +88,14 @@ export default function Borrow({ contract, setIndex }) {
       if(collatralToken.key == 'null') throw new Error('collatral coin not spesified');
       if(collatralAmount == 0) throw new Error('collatral amount not spesified');
       if(borrowingToken.key == 'null') throw new Error('borrowing coin not spesified');
-      if(parseInt(durationInHours) < 24) throw new Error('duration can not be shorter than a day');
+      if(parseInt(durationInDays) < 1 || parseInt(durationInDays) > 365) throw new Error('duration is not in range: (1 to 365 days)');
 
       let request = [
         collatralToken.key,
         BigInt(collatralAmount * 10 ** toDecimalsMapping[collatralToken.key]),
         borrowingToken.key,
         BigInt(collatraliztionRate),
-        BigInt(parseInt(durationInHours)),
+        BigInt(parseInt(durationInDays)),
         BigInt(intrestYearly)
       ];
 
@@ -147,8 +137,8 @@ export default function Borrow({ contract, setIndex }) {
             <div>
               <h1 className="text-2xl dark:text-white my-2">paramiters</h1>
               <div className="h-0 mb-5 border-2 border-transparent border-t-sky-500"></div>
-              <h1 className="text-md dark:text-white">duration in hours</h1>
-              <InputField type="number" value={durationInHours} setValue={setDurationInHours} onKeyPress={ensureInt} min="24" />
+              <h1 className="text-md dark:text-white">duration in days</h1>
+              <InputField type="number" value={durationInDays} setValue={setDurationInDays} onKeyPress={ensureInt} min="24" />
               <h1 className="text-md dark:text-white">intrest rate</h1>
               <Slider className="text-sky-500" value={intrestYearly} onChange={(e) => { setIntrestYearly(e.target.value) }} defaultValue={intrestYearly} min={2} max={15} aria-label="Small" valueLabelDisplay="auto" />
             </div>
